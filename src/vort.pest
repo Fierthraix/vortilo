@@ -1,0 +1,98 @@
+WHITESPACE = _{ " " }
+plural_fino = { "j" | "J" }
+akuzativa_fino = { "n" | "N" }
+cxapela_litero = _{ "ĉ" | "ĝ" | "ĥ" | "ĵ" | "ŝ" | "ŭ" | "Ĉ" | "Ĝ" | "Ĥ" | "Ĵ" | "Ŝ" | "Ŭ" }
+litero = _{ASCII_ALPHA | cxapela_litero}
+
+////
+//  Tablevortoj.
+////
+prefikso = { "ki" | "ti" | "i" | "ĉi" | "neni" }
+postfikso = {"on" | "o" | "ujn" | "uj" | "un" | "u" | "es" | "el" | "en" | "e" | "am" | "ajn" | "aj" | "an" | "al" | "a" }
+tabelvorto = @{ prefikso ~ postfikso }
+
+////
+//  Vortetoj.
+////
+e_vorteto = {"ĉi" | "for" | "ankoraŭ" | "baldaŭ" | "hodiaŭ" | "hieraŭ" | "morgaŭ" | "jam" | "ĵus" | "nun" | "plu" | "tuj" | "ajn" | "almenaŭ" | "ankaŭ" | "apenaŭ" | "do" | "eĉ" | "ja" | "jen" | "kvazaŭ" | "mem" | "nur" | "plu" | "plej" | "preskaŭ" | "tamen" | "tro" | "tre"}
+rolvorteto = {"je" | "de" | "da" | "antaŭ" | "apud" | "ĉe" | "ĉirkaŭ" | "ekster" | "en" | "inter" | "kontraŭ" | "post" | "preter" | "sub" | "super" | "sur" | "tra" | "trans" | "al" | "el" | "ĝis" | "anstataŭ" | "dum" | "krom" | "kun" | "laŭ" | "malgraŭ" | "per" | "po" | "por" | "pri" | "pro" | "sen"}
+vorteto = { "kaj" | "aŭ" | "sed" | "plus" | "minus" | "ĉu" | "jen" | "ju" | "des" | "nek" | "ol" | "ke" | "ne" | "jes" }
+
+
+////
+//  Nombroj.
+////
+
+baz_nombro = _{ "unu" | "du" | "tri" | "kvar" | "kvin" | "ses" | "sep" | "ok" | "naŭ" | "dek" | "cent" | "mil" | "miliono" | "miliardo"}
+
+////
+// Pronomoj.
+////
+baz_pronomo = _{ "mi" | "ci" | "vi" | "ili" | "ŝi" | "li" | "ri" | "ni" | "si" | "ĝi" }
+pronomo = @{baz_pronomo ~ ("a")* ~ (plural_fino)* ~ (akuzativa_fino)*}
+
+
+////
+// Substantivoj.
+////
+ne_o = _{ (!"o" ~ litero)* ~ ("o") }
+ne_oj = _{ (!"oj" ~ litero)* ~ ("oj") }
+ne_on = _{ (!"on" ~ litero)* ~ ("on") }
+ne_ojn = _{ (!"ojn" ~ litero)* ~ ("ojn") }
+substantivo = @{
+    (ne_ojn+ ~ !litero{3}) |
+    (ne_on+ ~ !litero{2}) |
+    (ne_oj+ ~ !litero{2}) |
+    (ne_o+ ~ !litero)
+}
+
+////
+// Adjektivoj.
+////
+ne_a = _{ (!"a" ~ litero)* ~ ("a") }
+ne_aj = _{ (!"aj" ~ litero)* ~ ("aj") }
+ne_an = _{ (!"an" ~ litero)* ~ ("an") }
+ne_ajn = _{ (!"ajn" ~ litero)* ~ ("ajn") }
+adjektivo = @{
+    (ne_ajn+ ~ !litero{3}) |
+    (ne_an+ ~ !litero{2}) |
+    (ne_aj+ ~ !litero{2}) |
+    (ne_a+ ~ !litero)
+}
+
+////
+// Adverboj.
+////
+ne_e = { (!"e" ~ litero)* ~ "e" }
+ne_en = { (!"en" ~ litero)* ~ "en" }
+adverbo = @{
+    (ne_en+ ~ !litero{2}) |
+    (ne_e+ ~ !litero)
+}
+
+////
+// Verboj.
+////
+infinitivo = { (!"i" ~ litero)* ~ ("i") }
+pastinecto = { (!"is" ~ litero)* ~ ("is") }
+nuntempo = { (!"as" ~ litero)* ~ ("as") }
+estonteco = { (!"os" ~ litero)* ~ ("os") }
+kondixa = { (!"us" ~ litero)* ~ ("us") }
+impterativo = { (!"u" ~ litero)* ~ ("u") }
+verbo = @{
+    (kondixa+ ~ !litero{2}) |
+    (impterativo+ ~ !litero) |
+    (pastinecto+ ~ !litero{2}) |
+    (nuntempo+ ~ !litero{2}) |
+    (estonteco+ ~ !litero{2}) |
+    (infinitivo+ ~ !litero)
+}
+
+vorto = {
+    tabelvorto | pronomo | e_vorteto | rolvorteto | vorteto |
+    adjektivo | substantivo | adverbo | verbo
+}
+
+//literoj = @{ (ESPERANTA_LITERO)+ }
+frazo = { (vorto ~ (" ")*)+ }
+dosiero = { SOI ~ (vorto ~ (" ")+)* ~ EOI }

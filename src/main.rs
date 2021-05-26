@@ -1,11 +1,8 @@
 extern crate pest;
 
-use std::collections::HashMap;
-
 use vortilo::kreu_propraĵoj;
 
 use crate::pest::Parser;
-use crate::pest::Span;
 use vortilo::{Rule, Vortilo};
 
 fn main() {

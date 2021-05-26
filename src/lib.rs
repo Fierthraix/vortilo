@@ -2,30 +2,23 @@
 extern crate pest_derive;
 extern crate pest;
 
-//use std::collections::HashMap;
-
-//use pest::Span;
-//use pest::RuleType;
 use pest::iterators::Pair;
+use serde_json::map::Map;
 use serde_json::{json, Value};
 
-
-fn akuzativo(json: &mut Value, akuzativ: bool) {
-    if akuzativ {
-        match json {
-            Value::Object(map) => {
-                map.insert("n".to_string(), Value::String("Accusative".to_string()));
-            },
-            _ => (),
-        }
-    }
+macro_rules! mapo {
+    ($nomo:expr, $datumo:expr) => {{
+        let mut mapo = Map::new();
+        mapo.insert($nomo.to_string(), Value::String($datumo.to_string()));
+        Value::Object(mapo)
+    }};
 }
 
 #[derive(Parser)]
 #[grammar = "vort.pest"]
 pub struct Vortilo;
 
-pub fn kreu_propraĵoj<'a>(paro: Pair<'a, Rule>) -> Value {
+pub fn kreu_propraĵoj(paro: Pair<'_, Rule>) -> Value {
     let paro = paro.into_inner().next().unwrap();
     match paro.as_rule() {
         Rule::tabelvorto => parsu_tabelvorton(paro),
@@ -43,62 +36,74 @@ pub fn kreu_propraĵoj<'a>(paro: Pair<'a, Rule>) -> Value {
     }
 }
 
-fn parsu_tabelvorton<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_tabelvorton(paro: Pair<'_, Rule>) -> Value {
     let mut paro = paro.into_inner();
+    // Atingu kaj prefikson kaj postfikson.
     let prefikso = paro.next().unwrap();
     let postfikso = paro.next().unwrap();
 
-    let mut rez = json!({
-        prefikso.as_str(): prefikso.as_str(),
-        postfikso.as_str(): postfikso.as_str()
-    });
+    let mut rez = vec![
+        mapo!("tb_prefikso", prefikso.as_str()),
+        mapo!("tb_postfikso", postfikso.as_str()),
+    ];
 
-    akuzativo(&mut rez, postfikso.as_str().contains('n'));
-    //akuzativo!(rez, postfikso.as_str().contains('j'));
+    // Kontrolu por akuzativo kaj plurala.
+    if postfikso.as_rule() == Rule::sxangxebla_postfikso {
+        for nov_paro in paro {
+            match nov_paro.as_rule() {
+                Rule::plural_fino => {
+                    rez.push(mapo!("j", "Plural"));
+                }
+                Rule::akuzativa_fino => {
+                    rez.push(mapo!("n", "Accusative"));
+                }
+                _ => unreachable!(),
+            }
+        }
+    }
 
-    rez
+    Value::Array(rez)
 }
 
-fn parsu_pronomon<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_pronomon(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_e_vorteton<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_e_vorteton(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_rolvorteton<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_rolvorteton(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_gramatikan_vorteton<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_gramatikan_vorteton(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_ekkriitan<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_ekkriitan(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_nombron<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_nombron(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_adjektivon<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_adjektivon(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_substantivon<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_substantivon(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_adverbon<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_adverbon(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_verbon<'a>(paro: Pair<'a, Rule>) -> Value {
+fn parsu_verbon(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -117,7 +122,7 @@ mod tests {
                 assert_eq!(substantivo.as_str(), vorto);
                 assert_eq!(substantivo.as_rule(), $regulo);
             }
-        }
+        };
     }
 
     #[test]
@@ -125,7 +130,6 @@ mod tests {
         let frazo = "aktivo hundojn estantaĵoj belon katon ĝu'";
 
         testu_samspecon!(&frazo, Rule::substantivo);
-
     }
     #[test]
     fn test_adjektivo() {

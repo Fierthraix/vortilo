@@ -52,6 +52,7 @@ pronomo = @{baz_pronomo ~ ("a")* ~ (plural_fino)* ~ (akuzativa_fino)*}
 ////
 // Substantivoj.
 ////
+ne_apostrof = _{ (!"'" ~ litero)* ~ ("'") }
 ne_o = _{ (!"o" ~ litero)* ~ ("o") }
 ne_oj = _{ (!"oj" ~ litero)* ~ ("oj") }
 ne_on = _{ (!"on" ~ litero)* ~ ("on") }
@@ -60,7 +61,8 @@ substantivo = @{
     (ne_ojn+ ~ !litero{3}) |
     (ne_on+ ~ !litero{2}) |
     (ne_oj+ ~ !litero{2}) |
-    (ne_o+ ~ !litero)
+    (ne_o+ ~ !litero) |
+    (ne_apostrof+ ~ !litero)
 }
 
 ////

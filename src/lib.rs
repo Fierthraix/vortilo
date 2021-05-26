@@ -15,7 +15,7 @@ mod tests {
     use crate::pest::Parser;
     #[test]
     fn test_substantivo() {
-        let frazo = "aktivo hundojn estantaĵoj belon katon";
+        let frazo = "aktivo hundojn estantaĵoj belon katon ĝu'";
         let vortilo = Vortilo::parse(Rule::frazo, &frazo).unwrap().next().unwrap().into_inner();
 
         for (vort_paro, vorto) in vortilo.zip(frazo.split_whitespace()) {
@@ -26,7 +26,7 @@ mod tests {
     }
     #[test]
     fn test_adjektivo() {
-        let frazo = "aktiva hundajn estantaj belan katan";
+        let frazo = "aktiva hundajn estantaj belan katan ĝua";
         let vortilo = Vortilo::parse(Rule::frazo, &frazo).unwrap().next().unwrap().into_inner();
 
         for (vort_paro, vorto) in vortilo.zip(frazo.split_whitespace()) {
@@ -37,7 +37,7 @@ mod tests {
     }
     #[test]
     fn test_adverbo() {
-        let frazo = "aktive hunde estante belen katen";
+        let frazo = "aktive hunde estante belen katen ĝue";
         let vortilo = Vortilo::parse(Rule::frazo, &frazo).unwrap().next().unwrap().into_inner();
 
         for (vort_paro, vorto) in vortilo.zip(frazo.split_whitespace()) {

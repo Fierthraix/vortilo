@@ -8,8 +8,9 @@ litero = _{ASCII_ALPHA | cxapela_litero}
 //  Tablevortoj.
 ////
 prefikso = { "ki" | "ti" | "i" | "ĉi" | "neni" }
-postfikso = {"on" | "o" | "ujn" | "uj" | "un" | "u" | "es" | "el" | "en" | "e" | "am" | "ajn" | "aj" | "an" | "al" | "a" }
-tabelvorto = @{ prefikso ~ postfikso }
+postfikso = { "om" | "es" | "el" | "e" | "am" | "al" }
+sxangxebla_postfikso = { "o" | "u" | "a" | "e"}
+tabelvorto = ${ prefikso ~ (postfikso | (sxangxebla_postfikso ~ plural_fino* ~ akuzativa_fino* ))}
 
 ////
 //  Vortetoj.

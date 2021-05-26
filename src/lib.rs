@@ -2,12 +2,89 @@
 extern crate pest_derive;
 extern crate pest;
 
+use std::collections::HashMap;
+
 use pest::Span;
+use pest::RuleType;
 use pest::iterators::Pair;
 
 #[derive(Parser)]
 #[grammar = "vort.pest"]
 pub struct Vortilo;
+
+
+pub fn kreu_propraĵoj<'a>(paro: Pair<'a, Rule>) -> Vec<(String, String)>{
+    let paro = paro.into_inner().next().unwrap();
+    match paro.as_rule() {
+        Rule::tabelvorto => parsu_tabelvorton(&paro),
+        Rule::pronomo => parsu_pronomon(&paro),
+        Rule::e_vorteto => parsu_e_vorteton(&paro),
+        Rule::rolvorteto => parsu_rolvorteton(&paro),
+        Rule::gramatika_vorteto => parsu_gramatikan_vorteton(&paro),
+        Rule:: ekkriita_vorto => parsu_ekkriitan(&paro),
+        Rule::nombro => parsu_nombron(&paro),
+        Rule::adjektivo => parsu_adjektivon(&paro),
+        Rule::substantivo => parsu_substantivon(&paro),
+        Rule::adverbo => parsu_adverbon(&paro),
+        Rule::verbo => parsu_verbon(&paro),
+        _ => unreachable!()
+    }
+}
+
+fn parsu_tabelvorton<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    let mut paro = paro.into_inner();
+    let prefikso = paro.next().unwrap();
+    let postfikso = paro.next().unwrap();
+    vec![]
+}
+
+fn parsu_pronomon<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_e_vorteton<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_rolvorteton<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_gramatikan_vorteton<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_ekkriitan<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_nombron<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_adjektivon<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_substantivon<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_adverbon<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn parsu_verbon<'a>(paro: &Pair<'a, Rule>) -> Vec<(String, String)> {
+    vec![]
+}
+
+fn akzukativo() -> (String, String) {
+    ("n".to_string(), "Accusative".to_string())
+}
+
+fn plurala() -> (String, String) {
+    ("j".to_string(), "Plural".to_string())
+}
 
 #[cfg(test)]
 mod tests {

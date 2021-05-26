@@ -14,37 +14,55 @@ mod tests {
     use super::*;
     use crate::pest::Parser;
     #[test]
-    fn test_adjektivo() {
-        let vorto = "aĥtiva hundo estas bela kato";
-        let vortilo = Vortilo::parse(Rule::frazo, &vorto);
+    fn test_substantivo() {
+        let frazo = "aktivo hundojn estantaĵoj belon katon";
+        let vortilo = Vortilo::parse(Rule::frazo, &frazo).unwrap().next().unwrap().into_inner();
 
-        println!("{:?}", vortilo);
-        assert_eq!(vortilo.unwrap().as_str(), vorto);
-        assert!(false);
-    }
-    #[test]
-    fn test_frazo() {
-        let vorto = "Mi rapide kuiras per la paton";
-        let vortilo = Vortilo::parse(Rule::adverbo, &vorto);
-        println!("YYY\n{:?}", vortilo);
-        assert!(vortilo.is_ok());
-    }
-    /*
-    #[test]
-    fn test_vorto() {
-        let vorto = "eĥoŝanĝoĉiuĵaŭde";
-        let vortilo = Vortilo::parse(Rule::vorto, &vorto);
-        let parsita_vort = vortilo.unwrap().as_str();
-        assert_eq!(parsita_vort, vorto);
-    }
-    #[test]
-    fn test_frazo() {
-        let my_str = "vorto salution estas mia nomo Adamo";
-        let succ2 = Vortilo::parse(Rule::frazo, my_str).unwrap().next().unwrap();
-
-        for (parsita_vort, vorto) in succ2.into_inner().zip(my_str.split_whitespace()) {
-            assert_eq!(parsita_vort.as_str(), vorto)
+        for (vort_paro, vorto) in vortilo.zip(frazo.split_whitespace()) {
+            let substantivo = vort_paro.into_inner().next().unwrap();
+            assert_eq!(substantivo.as_str(), vorto);
+            assert_eq!(substantivo.as_rule(), Rule::substantivo);
         }
     }
-    */
+    #[test]
+    fn test_adjektivo() {
+        let frazo = "aktiva hundajn estantaj belan katan";
+        let vortilo = Vortilo::parse(Rule::frazo, &frazo).unwrap().next().unwrap().into_inner();
+
+        for (vort_paro, vorto) in vortilo.zip(frazo.split_whitespace()) {
+            let adjektivo = vort_paro.into_inner().next().unwrap();
+            assert_eq!(adjektivo.as_str(), vorto);
+            assert_eq!(adjektivo.as_rule(), Rule::adjektivo);
+        }
+    }
+    #[test]
+    fn test_adverbo() {
+        let frazo = "aktive hunde estante belen katen";
+        let vortilo = Vortilo::parse(Rule::frazo, &frazo).unwrap().next().unwrap().into_inner();
+
+        for (vort_paro, vorto) in vortilo.zip(frazo.split_whitespace()) {
+            let adverbo = vort_paro.into_inner().next().unwrap();
+            assert_eq!(adverbo.as_str(), vorto);
+            assert_eq!(adverbo.as_rule(), Rule::adverbo);
+        }
+    }
+    #[test]
+    fn test_verbo() {
+        let frazo = "aktivi hundu estantis belas katos ĝuus";
+        let vortilo = Vortilo::parse(Rule::frazo, &frazo).unwrap().next().unwrap().into_inner();
+
+        println!("{:?}", vortilo);
+
+        for (vort_paro, vorto) in vortilo.zip(frazo.split_whitespace()) {
+            let verbo = vort_paro.into_inner().next().unwrap();
+            assert_eq!(verbo.as_str(), vorto);
+            assert_eq!(verbo.as_rule(), Rule::verbo);
+        }
+    }
+    #[test]
+    fn test_frazo() {
+        let vorto = "Mi rapide kuiras per la pato";
+        let vortilo = Vortilo::parse(Rule::frazo, &vorto);
+        assert_eq!(vortilo.unwrap().as_str(), vorto);
+    }
 }

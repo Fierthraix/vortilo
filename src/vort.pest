@@ -53,12 +53,12 @@ pronomo = @{baz_pronomo ~ ("a")* ~ (plural_fino)* ~ (akuzativa_fino)*}
 ////
 // Substantivoj.
 ////
-ne_apostrof = _{ (!"'" ~ litero)* ~ ("'") }
-ne_o = _{ (!"o" ~ litero)* ~ ("o") }
-ne_oj = _{ (!"oj" ~ litero)* ~ ("oj") }
-ne_on = _{ (!"on" ~ litero)* ~ ("on") }
-ne_ojn = _{ (!"ojn" ~ litero)* ~ ("ojn") }
-substantivo = @{
+ne_apostrof = { (!"'" ~ litero)* ~ ("'") }
+ne_o = { (!"o" ~ litero)* ~ ("o") }
+ne_oj = { (!"oj" ~ litero)* ~ ("oj") }
+ne_on = { (!"on" ~ litero)* ~ ("on") }
+ne_ojn = { (!"ojn" ~ litero)* ~ ("ojn") }
+substantivo = ${
     (ne_ojn+ ~ !litero{3}) |
     (ne_on+ ~ !litero{2}) |
     (ne_oj+ ~ !litero{2}) |
@@ -69,11 +69,11 @@ substantivo = @{
 ////
 // Adjektivoj.
 ////
-ne_a = _{ (!"a" ~ litero)* ~ ("a") }
-ne_aj = _{ (!"aj" ~ litero)* ~ ("aj") }
-ne_an = _{ (!"an" ~ litero)* ~ ("an") }
-ne_ajn = _{ (!"ajn" ~ litero)* ~ ("ajn") }
-adjektivo = @{
+ne_a = { (!"a" ~ litero)* ~ ("a") }
+ne_aj = { (!"aj" ~ litero)* ~ ("aj") }
+ne_an = { (!"an" ~ litero)* ~ ("an") }
+ne_ajn = { (!"ajn" ~ litero)* ~ ("ajn") }
+adjektivo = ${
     (ne_ajn+ ~ !litero{3}) |
     (ne_an+ ~ !litero{2}) |
     (ne_aj+ ~ !litero{2}) |
@@ -85,7 +85,7 @@ adjektivo = @{
 ////
 ne_e = { (!"e" ~ litero)* ~ "e" }
 ne_en = { (!"en" ~ litero)* ~ "en" }
-adverbo = @{
+adverbo = ${
     (ne_en+ ~ !litero{2}) |
     (ne_e+ ~ !litero)
 }

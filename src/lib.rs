@@ -14,12 +14,25 @@ macro_rules! mapo {
     }};
 }
 
+macro_rules! akuzativo {
+    () => {
+        mapo!("n", "Accusative")
+    };
+}
+
+macro_rules! plurala {
+    () => {
+        mapo!("j", "Plural")
+    };
+}
+
 #[derive(Parser)]
 #[grammar = "vort.pest"]
 pub struct Vortilo;
 
 pub fn kreu_propraĵoj(paro: Pair<'_, Rule>) -> Value {
     let paro = paro.into_inner().next().unwrap();
+    println!("{:?}", paro);
     match paro.as_rule() {
         Rule::tabelvorto => parsu_tabelvorton(paro),
         Rule::pronomo => parsu_pronomon(paro),
@@ -27,9 +40,7 @@ pub fn kreu_propraĵoj(paro: Pair<'_, Rule>) -> Value {
             parsu_konstantan_vorton(paro)
         }
         Rule::nombro => parsu_nombron(paro),
-        Rule::adjektivo => parsu_adjektivon(paro),
-        Rule::substantivo => parsu_substantivon(paro),
-        Rule::adverbo => parsu_adverbon(paro),
+        Rule::adjektivo | Rule::substantivo | Rule::adverbo => parsu_normalan(paro),
         Rule::verbo => parsu_verbon(paro),
         _ => unreachable!(),
     }
@@ -51,10 +62,10 @@ fn parsu_tabelvorton(paro: Pair<'_, Rule>) -> Value {
         for nov_paro in paro {
             match nov_paro.as_rule() {
                 Rule::plural_fino => {
-                    rez.push(mapo!("j", "Plural"));
+                    rez.push(plurala!());
                 }
                 Rule::akuzativa_fino => {
-                    rez.push(mapo!("n", "Accusative"));
+                    rez.push(akuzativo!());
                 }
                 _ => unreachable!(),
             }
@@ -69,7 +80,6 @@ fn parsu_pronomon(_paro: Pair<'_, Rule>) -> Value {
 }
 
 fn parsu_konstantan_vorton(paro: Pair<'_, Rule>) -> Value {
-
     let konstanto = paro.as_str();
 
     let konstantaj_vortoj: Value = serde_json::from_str(include_str!("konstantaj.json")).unwrap();
@@ -79,10 +89,10 @@ fn parsu_konstantan_vorton(paro: Pair<'_, Rule>) -> Value {
             // Kontrolu tra la vortoj.
             for (vorto, defino) in &mapo {
                 if vorto == konstanto {
-                    return mapo!(vorto, defino);
+                    return Value::Array(vec![mapo!(vorto, defino)]);
                 }
             }
-        },
+        }
         _ => (),
     };
     json!({})
@@ -92,16 +102,34 @@ fn parsu_nombron(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_adjektivon(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
-}
+fn parsu_normalan(paro: Pair<'_, Rule>) -> Value {
+    let ena = paro.into_inner().next().unwrap();
 
-fn parsu_substantivon(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
-}
+    let (akuzativo, plurala, radiko) = match ena.as_rule() {
+        Rule::ne_o | Rule::ne_a | Rule::ne_e | Rule::ne_apostrof => {
+            (false, false, &ena.as_str()[0..ena.as_str().len() - 1])
+        }
+        Rule::ne_oj | Rule::ne_aj => (false, true, &ena.as_str()[0..ena.as_str().len() - 2]),
+        Rule::ne_on | Rule::ne_an | Rule::ne_en => {
+            (true, false, &ena.as_str()[0..ena.as_str().len() - 2])
+        }
+        Rule::ne_ajn | Rule::ne_ojn => (true, false, &ena.as_str()[0..ena.as_str().len() - 3]),
+        _ => unreachable!(),
+    };
 
-fn parsu_adverbon(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
+    let radiko_desc = "TODO";
+
+    let mut rez = vec![mapo!(radiko, radiko_desc)];
+
+    if akuzativo {
+        rez.push(akuzativo!());
+    }
+
+    if plurala {
+        rez.push(plurala!());
+    }
+
+    Value::Array(rez)
 }
 
 fn parsu_verbon(_paro: Pair<'_, Rule>) -> Value {

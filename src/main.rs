@@ -13,7 +13,7 @@ fn main() {
 
     // Elektu lingvon.
 
-    let dosiero = "neniujn tiaj";
+    let dosiero = "kaj"; //" en preter ne minus plus jes";
     for vorto in dosiero.split_whitespace() {
         let parsita_vorto = Vortilo::parse(Rule::vorto, vorto).unwrap().next().unwrap();
 

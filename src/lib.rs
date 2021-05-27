@@ -23,10 +23,9 @@ pub fn kreu_propraĵoj(paro: Pair<'_, Rule>) -> Value {
     match paro.as_rule() {
         Rule::tabelvorto => parsu_tabelvorton(paro),
         Rule::pronomo => parsu_pronomon(paro),
-        Rule::e_vorteto => parsu_e_vorteton(paro),
-        Rule::rolvorteto => parsu_rolvorteton(paro),
-        Rule::gramatika_vorteto => parsu_gramatikan_vorteton(paro),
-        Rule::ekkriita_vorto => parsu_ekkriitan(paro),
+        Rule::e_vorteto | Rule::rolvorteto | Rule::gramatika_vorteto | Rule::ekkriita_vorto => {
+            parsu_konstantan_vorton(paro)
+        }
         Rule::nombro => parsu_nombron(paro),
         Rule::adjektivo => parsu_adjektivon(paro),
         Rule::substantivo => parsu_substantivon(paro),
@@ -69,19 +68,23 @@ fn parsu_pronomon(_paro: Pair<'_, Rule>) -> Value {
     json!({})
 }
 
-fn parsu_e_vorteton(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
-}
+fn parsu_konstantan_vorton(paro: Pair<'_, Rule>) -> Value {
 
-fn parsu_rolvorteton(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
-}
+    let konstanto = paro.as_str();
 
-fn parsu_gramatikan_vorteton(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
-}
+    let konstantaj_vortoj: Value = serde_json::from_str(include_str!("konstantaj.json")).unwrap();
 
-fn parsu_ekkriitan(_paro: Pair<'_, Rule>) -> Value {
+    match konstantaj_vortoj {
+        Value::Object(mapo) => {
+            // Kontrolu tra la vortoj.
+            for (vorto, defino) in &mapo {
+                if vorto == konstanto {
+                    return mapo!(vorto, defino);
+                }
+            }
+        },
+        _ => (),
+    };
     json!({})
 }
 

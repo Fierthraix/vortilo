@@ -17,8 +17,8 @@ tabelvorto = ${ prefikso ~ (postfikso | (sxangxebla_postfikso ~ plural_fino* ~ a
 ////
 e_vorteto = {
     "ĉi" | "for" | "ankoraŭ" | "baldaŭ" | "hodiaŭ" | "hieraŭ" | "morgaŭ" | "jam" |
-    "ĵus" | "nun" | "plu" | "tuj" | "ajn" | "almenaŭ" | "ankaŭ" | "apenaŭ" | "do" |
-    "eĉ" | "ja" | "jen" | "kvazaŭ" | "mem" | "nur" | "plu" | "plej" | "preskaŭ" |
+    "ĵus" | "nun" | "tuj" | "ajn" | "almenaŭ" | "ankaŭ" | "apenaŭ" | "do" | "eĉ"  |
+    "ja" | "jen" | "kvazaŭ" | "mem" | "nur" | "plu" | "plej" | "preskaŭ" |
     "tamen" | "tro" | "tre"
 }
 rolvorteto = {
@@ -112,8 +112,8 @@ verbo = @{
 // Vortoj.
 ////
 vorto = {
-    tabelvorto | pronomo | e_vorteto | rolvorteto | gramatika_vorteto |
-    ekkriita_vorto | nombro | adjektivo | substantivo | adverbo | verbo
+    tabelvorto | e_vorteto | rolvorteto | gramatika_vorteto | ekkriita_vorto |
+    pronomo | nombro | adjektivo | substantivo | adverbo | verbo
 }
 
 //literoj = @{ (ESPERANTA_LITERO)+ }

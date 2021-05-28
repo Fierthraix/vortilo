@@ -111,7 +111,7 @@ verbo = @{
 ////
 // Vortoj.
 ////
-vorto = {
+vorto = ${
     tabelvorto | e_vorteto | rolvorteto | gramatika_vorteto | ekkriita_vorto |
     pronomo | nombro | adjektivo | substantivo | adverbo | verbo
 }

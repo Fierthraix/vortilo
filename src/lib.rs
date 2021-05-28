@@ -142,46 +142,33 @@ mod tests {
     use crate::pest::Parser;
 
     macro_rules! testu_samspecon {
-        ($frazo:expr, $regulo:expr) => {
-            let vortilo = Vortilo::parse(Rule::frazo, $frazo)
-                .unwrap()
-                .next()
-                .unwrap()
-                .into_inner();
-            for (vort_paro, vorto) in vortilo.zip($frazo.split_whitespace()) {
-                let substantivo = vort_paro.into_inner().next().unwrap();
-                assert_eq!(substantivo.as_str(), vorto);
-                assert_eq!(substantivo.as_rule(), $regulo);
-            }
-        };
+        ($($nomo:ident: $regulo:expr, $frazo:expr,)*) => {
+            $(
+                #[test]
+                fn $nomo() {
+                    let vortilo = Vortilo::parse(Rule::frazo, $frazo)
+                        .unwrap()
+                        .next()
+                        .unwrap()
+                        .into_inner();
+                    for (vort_paro, vorto) in vortilo.zip($frazo.split_whitespace()) {
+                        let substantivo = vort_paro.into_inner().next().unwrap();
+                        assert_eq!(substantivo.as_str(), vorto);
+                        assert_eq!(substantivo.as_rule(), $regulo);
+                    }
+                }
+            )*
+        }
     }
 
-    #[test]
-    fn test_substantivo() {
-        let frazo = "aktivo hundojn estantaĵoj belon katon ĝu'";
+    testu_samspecon! {
+        substantivo: Rule::substantivo, "aktivo hundojn estantaĵoj belon katon ĝu'",
+        adjektivo: Rule::adjektivo, "aktiva hundajn estantaj belan katan ĝua",
+        adverbo: Rule::adverbo, "aktive hunde estante belen katen ĝue",
+        verbo: Rule::verbo, "aktivi hundu estantis belas katos ĝuus",
+        tabelvorto: Rule::tabelvorto, "tiajn neniom iom kiam",
+    }
 
-        testu_samspecon!(&frazo, Rule::substantivo);
-    }
-    #[test]
-    fn test_adjektivo() {
-        let frazo = "aktiva hundajn estantaj belan katan ĝua";
-        testu_samspecon!(&frazo, Rule::adjektivo);
-    }
-    #[test]
-    fn test_adverbo() {
-        let frazo = "aktive hunde estante belen katen ĝue";
-        testu_samspecon!(&frazo, Rule::adverbo);
-    }
-    #[test]
-    fn test_verbo() {
-        let frazo = "aktivi hundu estantis belas katos ĝuus";
-        testu_samspecon!(&frazo, Rule::verbo);
-    }
-    #[test]
-    fn test_tabelvorto() {
-        let frazo = "tiajn neniom iom kiam";
-        testu_samspecon!(&frazo, Rule::tabelvorto);
-    }
     #[test]
     fn test_frazo() {
         let vorto = "Mi rapide kuiras per la pato";

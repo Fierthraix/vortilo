@@ -1,178 +1,101 @@
-#[macro_use]
-extern crate pest_derive;
-extern crate pest;
-
-use pest::iterators::Pair;
-use serde_json::map::Map;
+use logos::{Lexer, Logos};
 use serde_json::{json, Value};
 
-macro_rules! mapo {
-    ($nomo:expr, $datumo:expr) => {{
-        let mut mapo = Map::new();
-        mapo.insert($nomo.to_string(), Value::String($datumo.to_string()));
-        Value::Object(mapo)
-    }};
+#[derive(Logos, Debug, PartialEq)]
+pub enum Vorto {
+    #[regex("[a-zĥŝĝĉĵŭ]+", gramatika)]
+    GramatikaVorto(Value),
+
+    #[regex("[a-zĥŝĝĉĵŭ]+(ajn|aj|an|a)", adjektivo)]
+    Adjektivo(Value),
+
+    #[regex("[a-zĥŝĝĉĵŭ]+(ojn|oj|on|o)", substantivo)]
+    Substantivo(Value),
+
+    #[regex("[a-zĥŝĝĉĵŭ]+(en|e)", adverbo)]
+    Adverbo(Value),
+
+    #[regex("[a-zĥŝĝĉĵŭ]+(i|us|is|os|as|u)", verbo)]
+    Verbo(Value),
+
+    #[error]
+    #[regex(" ", logos::skip)]
+    Eraro,
 }
 
-macro_rules! akuzativo {
-    () => {
-        mapo!("n", "Accusative")
-    };
-}
+fn gramatika(lex: &mut Lexer<Vorto>) -> Option<Value> {
+    let gramatikaj_vortoj: Value = serde_json::from_str(include_str!("./konstantaj.json")).unwrap();
+    let vorto = lex.slice();
 
-macro_rules! plurala {
-    () => {
-        mapo!("j", "Plural")
-    };
-}
-
-#[derive(Parser)]
-#[grammar = "vort.pest"]
-pub struct Vortilo;
-
-pub fn kreu_propraĵoj(paro: Pair<'_, Rule>) -> Value {
-    let paro = paro.into_inner().next().unwrap();
-    println!("{:?}", paro);
-    match paro.as_rule() {
-        Rule::tabelvorto => parsu_tabelvorton(paro),
-        Rule::pronomo => parsu_pronomon(paro),
-        Rule::e_vorteto | Rule::rolvorteto | Rule::gramatika_vorteto | Rule::ekkriita_vorto => {
-            parsu_konstantan_vorton(paro)
-        }
-        Rule::nombro => parsu_nombron(paro),
-        Rule::adjektivo | Rule::substantivo | Rule::adverbo => parsu_normalan(paro),
-        Rule::verbo => parsu_verbon(paro),
-        _ => unreachable!(),
+    match &gramatikaj_vortoj[vorto] {
+        Value::String(stringo) => Some(json!({vorto: stringo})),
+        _ => None,
     }
 }
 
-fn parsu_tabelvorton(paro: Pair<'_, Rule>) -> Value {
-    let mut paro = paro.into_inner();
-    // Atingu kaj prefikson kaj postfikson.
-    let prefikso = paro.next().unwrap();
-    let postfikso = paro.next().unwrap();
+fn adjektivo(lex: &mut Lexer<Vorto>) -> Option<Value> {
 
-    let mut rez = vec![
-        mapo!("tb_prefikso", prefikso.as_str()),
-        mapo!("tb_postfikso", postfikso.as_str()),
-    ];
+    let vorto = lex.slice();
 
-    // Kontrolu por akuzativo kaj plurala.
-    if postfikso.as_rule() == Rule::sxangxebla_postfikso {
-        for nov_paro in paro {
-            match nov_paro.as_rule() {
-                Rule::plural_fino => {
-                    rez.push(plurala!());
-                }
-                Rule::akuzativa_fino => {
-                    rez.push(akuzativo!());
-                }
-                _ => unreachable!(),
-            }
-        }
+    // Speciala kazo.
+    if vorto == "kaj" {
+        return gramatika(lex);
     }
 
-    Value::Array(rez)
-}
+    // Kontroli ĉu la vorto estas sufiĉe longa.
+    if vorto.len() <= 3 {
+        return None
+    }
 
-fn parsu_pronomon(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
-}
-
-fn parsu_konstantan_vorton(paro: Pair<'_, Rule>) -> Value {
-    let konstanto = paro.as_str();
-
-    let konstantaj_vortoj: Value = serde_json::from_str(include_str!("konstantaj.json")).unwrap();
-
-    match konstantaj_vortoj {
-        Value::Object(mapo) => {
-            // Kontrolu tra la vortoj.
-            for (vorto, defino) in &mapo {
-                if vorto == konstanto {
-                    return Value::Array(vec![mapo!(vorto, defino)]);
-                }
-            }
-        }
-        _ => (),
-    };
-    json!({})
-}
-
-fn parsu_nombron(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
-}
-
-fn parsu_normalan(paro: Pair<'_, Rule>) -> Value {
-    let ena = paro.into_inner().next().unwrap();
-
-    let (akuzativo, plurala, radiko) = match ena.as_rule() {
-        Rule::ne_o | Rule::ne_a | Rule::ne_e | Rule::ne_apostrof => {
-            (false, false, &ena.as_str()[0..ena.as_str().len() - 1])
-        }
-        Rule::ne_oj | Rule::ne_aj => (false, true, &ena.as_str()[0..ena.as_str().len() - 2]),
-        Rule::ne_on | Rule::ne_an | Rule::ne_en => {
-            (true, false, &ena.as_str()[0..ena.as_str().len() - 2])
-        }
-        Rule::ne_ajn | Rule::ne_ojn => (true, false, &ena.as_str()[0..ena.as_str().len() - 3]),
-        _ => unreachable!(),
+    let (akuzativa, plurala) = if vorto.ends_with("ajn") {
+        (true, true)
+    } else if vorto.ends_with("an") {
+        (true, false)
+    } else if vorto.ends_with("aj") {
+        (false, true)
+    } else if vorto.ends_with("a")  {
+        (false, false)
+    } else{
+        return None;
     };
 
-    let radiko_desc = "TODO";
-
-    let mut rez = vec![mapo!(radiko, radiko_desc)];
-
-    if akuzativo {
-        rez.push(akuzativo!());
-    }
-
-    if plurala {
-        rez.push(plurala!());
-    }
-
-    Value::Array(rez)
+    Some(json!({
+        vorto: "z",
+        "akuzativa": akuzativa,
+        "plurala": plurala,
+    }))
 }
 
-fn parsu_verbon(_paro: Pair<'_, Rule>) -> Value {
-    json!({})
+fn substantivo(lex: &mut Lexer<Vorto>) -> Option<Value> {
+    let vorto = lex.slice();
+
+    let (akuzativa, plurala) = if vorto.ends_with("ojn") {
+        (true, true)
+    } else if vorto.ends_with("on") {
+        (true, false)
+    } else if vorto.ends_with("oj") {
+        (false, true)
+    } else if vorto.ends_with("o") || vorto.ends_with("'")  {
+        (false, false)
+    } else{
+        return None;
+    };
+
+    Some(json!({
+        vorto: "z",
+        "akuzativa": akuzativa,
+        "plurala": plurala,
+    }))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::pest::Parser;
+fn adverbo(lex: &mut Lexer<Vorto>) -> Option<Value> {
+    Some(json!({
+        lex.slice(): "adverbo"
+    }))
+}
 
-    macro_rules! testu_samspecon {
-        ($($nomo:ident: $regulo:expr, $frazo:expr,)*) => {
-            $(
-                #[test]
-                fn $nomo() {
-                    let vortilo = Vortilo::parse(Rule::frazo, $frazo)
-                        .unwrap()
-                        .next()
-                        .unwrap()
-                        .into_inner();
-                    for (vort_paro, vorto) in vortilo.zip($frazo.split_whitespace()) {
-                        let substantivo = vort_paro.into_inner().next().unwrap();
-                        assert_eq!(substantivo.as_str(), vorto);
-                        assert_eq!(substantivo.as_rule(), $regulo);
-                    }
-                }
-            )*
-        }
-    }
-
-    testu_samspecon! {
-        substantivo: Rule::substantivo, "aktivo hundojn estantaĵoj belon katon ĝu'",
-        adjektivo: Rule::adjektivo, "aktiva hundajn estantaj belan katan ĝua",
-        adverbo: Rule::adverbo, "aktive hunde estante belen katen ĝue",
-        verbo: Rule::verbo, "aktivi hundu estantis belas katos ĝuus",
-        tabelvorto: Rule::tabelvorto, "tiajn neniom iom kiam",
-    }
-
-    #[test]
-    fn test_frazo() {
-        let vorto = "Mi rapide kuiras per la pato";
-        let vortilo = Vortilo::parse(Rule::frazo, &vorto);
-        assert_eq!(vortilo.unwrap().as_str(), vorto);
-    }
+fn verbo(lex: &mut Lexer<Vorto>) -> Option<Value> {
+    Some(json!({
+        lex.slice(): "verbo"
+    }))
 }

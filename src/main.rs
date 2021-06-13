@@ -1,5 +1,5 @@
 use logos::Logos;
-use vortilo::Vorto;
+use vortilo::parsu_vorton;
 
 fn main() {
     // Legu dosieron.
@@ -10,9 +10,8 @@ fn main() {
     let asdf = "kun morgaŭ kaj preter sub katajn irantan preta faritaj";
 
     let dosiero = "mi estas homo kiuj simple ŝatas la plej bonajn aĵojn en la viv'";
-    let mut lex = Vorto::lexer(dosiero);
 
-    for fdsa in lex { 
-        println!("{:?}", fdsa);
+    for vorto in dosiero.split_whitespace() {
+        println!("{} => {:?}", vorto, parsu_vorton(vorto));
     }
 }

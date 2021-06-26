@@ -5,14 +5,15 @@ use serde_json::{json, Value};
 
 lazy_static! {
     static ref KONSTANTAJ: Value = serde_json::from_str(include_str!("./konstantaj.json")).unwrap();
-    static ref TABEL_VORTOJ: Value = serde_json::from_str(include_str!("./tabelvortoj.json")).unwrap();
+    static ref TABEL_VORTOJ: Value =
+        serde_json::from_str(include_str!("./tabelvortoj.json")).unwrap();
     static ref PRONOMOJ: Value = serde_json::from_str(include_str!("./pronomoj.json")).unwrap();
 }
 
 macro_rules! trancxi {
     ($vorto:expr, $nombro:expr) => {
         &$vorto[..$vorto.as_bytes().iter().count() - $nombro]
-    }
+    };
 }
 
 #[derive(Debug, PartialEq)]
@@ -55,19 +56,54 @@ pub fn parsu_vorton(vorto: &str) -> Value {
     }
 
     let (akuzativa, plurala, speco, rez) = if vorto.ends_with("o") || vorto.ends_with("'") {
-        (false, false, VortSpeco::Substantivo, radiko(trancxi!(vorto, 1)))
+        (
+            false,
+            false,
+            VortSpeco::Substantivo,
+            radiko(trancxi!(vorto, 1)),
+        )
     } else if vorto.ends_with("oj") {
-        (false, true, VortSpeco::Substantivo, radiko(trancxi!(vorto, 2)))
+        (
+            false,
+            true,
+            VortSpeco::Substantivo,
+            radiko(trancxi!(vorto, 2)),
+        )
     } else if vorto.ends_with("on") {
-        (true, false, VortSpeco::Substantivo, radiko(trancxi!(vorto, 2)))
+        (
+            true,
+            false,
+            VortSpeco::Substantivo,
+            radiko(trancxi!(vorto, 2)),
+        )
     } else if vorto.ends_with("ojn") {
-        (true, true, VortSpeco::Substantivo, radiko(trancxi!(vorto, 3)))
+        (
+            true,
+            true,
+            VortSpeco::Substantivo,
+            radiko(trancxi!(vorto, 3)),
+        )
     } else if vorto.ends_with("a") {
-        (false, false, VortSpeco::Adjektivo, radiko(trancxi!(vorto, 1)))
+        (
+            false,
+            false,
+            VortSpeco::Adjektivo,
+            radiko(trancxi!(vorto, 1)),
+        )
     } else if vorto.ends_with("aj") {
-        (false, true, VortSpeco::Adjektivo, radiko(trancxi!(vorto, 2)))
+        (
+            false,
+            true,
+            VortSpeco::Adjektivo,
+            radiko(trancxi!(vorto, 2)),
+        )
     } else if vorto.ends_with("an") {
-        (true, false, VortSpeco::Adjektivo, radiko(trancxi!(vorto, 2)))
+        (
+            true,
+            false,
+            VortSpeco::Adjektivo,
+            radiko(trancxi!(vorto, 2)),
+        )
     } else if vorto.ends_with("ajn") {
         (true, true, VortSpeco::Adjektivo, radiko(trancxi!(vorto, 3)))
     } else if vorto.ends_with("en") {
@@ -94,7 +130,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
 
 fn gramatika(vorto: &str) -> Option<Value> {
     match &KONSTANTAJ[vorto] {
-        Value::String(traduko) => Some(json!({vorto: traduko})),
+        Value::String(traduko) => Some(json!({ vorto: traduko })),
         _ => None,
     }
 }
@@ -113,7 +149,7 @@ fn tabel_vorto(vorto: &str) -> Option<Value> {
     let vorto = trancxi!(vorto, fino);
 
     match &TABEL_VORTOJ[vorto] {
-        Value::String(traduko) => Some(json!({vorto: traduko})),
+        Value::String(traduko) => Some(json!({ vorto: traduko })),
         _ => None,
     }
 }

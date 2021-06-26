@@ -1,11 +1,7 @@
 use vortilo::parsu_vorton;
 
 fn main() {
-    // Legu dosieron.
-
-    // Elektu lingvon.
-
-    let fdsa = "katojn hundaj trairantan preta";
+    let fdsa = "katojn hundaj trairantan malsanulejo preta";
     let asdf = "kun morgaŭ kaj preter sub katajn irantan preta faritaj";
 
     let dosiero = "mi estas homo kiuj simple ŝatas la plej bonajn aĵojn en la viv'";

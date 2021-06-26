@@ -4,10 +4,14 @@ extern crate lazy_static;
 use serde_json::{json, Value};
 
 lazy_static! {
-    static ref KONSTANTAJ: Value = serde_json::from_str(include_str!("./konstantaj.json")).unwrap();
+    static ref AFIKSOJ: Value = serde_json::from_str(include_str!("../vortoj/afiksoj.json")).unwrap();
+    static ref ADJEKTIVOJ: Value = serde_json::from_str(include_str!("../vortoj/adjektivoj.json")).unwrap();
+    static ref KONSTANTAJ: Value = serde_json::from_str(include_str!("../vortoj/konstantaj.json")).unwrap();
+    static ref PRONOMOJ: Value = serde_json::from_str(include_str!("../vortoj/pronomoj.json")).unwrap();
+    static ref SUBSTANTIVOJ: Value = serde_json::from_str(include_str!("../vortoj/substantivoj.json")).unwrap();
     static ref TABEL_VORTOJ: Value =
-        serde_json::from_str(include_str!("./tabelvortoj.json")).unwrap();
-    static ref PRONOMOJ: Value = serde_json::from_str(include_str!("./pronomoj.json")).unwrap();
+        serde_json::from_str(include_str!("../vortoj/tabelvortoj.json")).unwrap();
+    static ref VERBOJ: Value = serde_json::from_str(include_str!("../vortoj/verboj.json")).unwrap();
 }
 
 macro_rules! trancxi {
@@ -113,7 +117,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
         (false, true, VortSpeco::Adverbo, radiko(trancxi!(vorto, 2)))
     } else if vorto.ends_with("e") {
         (false, false, VortSpeco::Adverbo, radiko(trancxi!(vorto, 1)))
-    } else if vorto.ends_with("s") {
+    } else if vorto.ends_with("s") || vorto.ends_with("i") {
         (false, false, VortSpeco::Verbo, verbo(vorto))
     } else {
         return json!({});
@@ -186,13 +190,44 @@ fn pronomo(vorto: &str) -> Option<Value> {
 }
 
 fn radiko(vorto: &str) -> Value {
-    json!({
-        vorto: "z"
-    })
+    simpla_radiko(vorto)
+}
+
+fn simpla_radiko(radiko: &str) -> Value {
+    // Kontrolu ĉu vorto estas en normala listo.
+    match &ADJEKTIVOJ[radiko] {
+        Value::String(traduko) => return json!({ radiko: traduko }),
+        _ => (),
+    }
+    match &SUBSTANTIVOJ[radiko] {
+        Value::String(traduko) => return json!({ radiko: traduko }),
+        _ => (),
+    }
+    match &VERBOJ[radiko] {
+        Value::String(traduko) => return json!({ radiko: traduko }),
+        _ => (),
+    }
+
+    json!({ radiko: "NE TROVITA" })
 }
 
 fn verbo(vorto: &str) -> Value {
+    let (rezulto, radik) = if vorto.ends_with("i") {
+        ("A", trancxi!(vorto, 1))
+    } else if vorto.ends_with("u") {
+        ("A", trancxi!(vorto, 2))
+    } else if vorto.ends_with("us") {
+        ("A", trancxi!(vorto, 2))
+    } else if vorto.ends_with("is") {
+        ("A", trancxi!(vorto, 2))
+    } else if vorto.ends_with("as") {
+        ("A", trancxi!(vorto, 2))
+    } else if vorto.ends_with("os") {
+        ("A", trancxi!(vorto, 2))
+    } else {
+        return json!({});
+    };
     json!({
-        vorto: "verbo"
+        vorto: radiko(radik)
     })
 }

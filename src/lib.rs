@@ -41,16 +41,19 @@ pub fn parsu_vorton(vorto: &str) -> Value {
         None => (),
     }
 
+    // Trovu tabelvortojn.
     match tabel_vorto(vorto) {
         Some(valuo) => return valuo,
         None => (),
     }
 
+    // Trovu pronomojn.
     match pronomo(vorto) {
         Some(valuo) => return valuo,
         None => (),
     }
 
+    // Sekvonta kontrolo bezonas almenaŭ 3 literojn.
     if vorto.len() < 3 {
         return json!({});
     }
@@ -115,6 +118,13 @@ pub fn parsu_vorton(vorto: &str) -> Value {
     } else {
         return json!({});
     };
+
+    if plurala {
+        //rez.aldonu(pluralo)
+    }
+    if akuzativa {
+        //rez.aldonu(akuzativo)
+    }
 
     /*
     return match speco {

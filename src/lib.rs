@@ -1,23 +1,45 @@
 #[macro_use]
 extern crate lazy_static;
 
-use serde_json::{json, Value};
-
-lazy_static! {
-    static ref AFIKSOJ: Value = serde_json::from_str(include_str!("../vortoj/afiksoj.json")).unwrap();
-    static ref ADJEKTIVOJ: Value = serde_json::from_str(include_str!("../vortoj/adjektivoj.json")).unwrap();
-    static ref KONSTANTAJ: Value = serde_json::from_str(include_str!("../vortoj/konstantaj.json")).unwrap();
-    static ref PRONOMOJ: Value = serde_json::from_str(include_str!("../vortoj/pronomoj.json")).unwrap();
-    static ref SUBSTANTIVOJ: Value = serde_json::from_str(include_str!("../vortoj/substantivoj.json")).unwrap();
-    static ref TABEL_VORTOJ: Value =
-        serde_json::from_str(include_str!("../vortoj/tabelvortoj.json")).unwrap();
-    static ref VERBOJ: Value = serde_json::from_str(include_str!("../vortoj/verboj.json")).unwrap();
-}
+use serde_json::{json, map::Map, Value};
 
 macro_rules! trancxi {
     ($vorto:expr, $nombro:expr) => {
         &$vorto[..$vorto.as_bytes().iter().count() - $nombro]
     };
+}
+
+macro_rules! alsxutu_dosieron {
+    ($dosiero:expr) => {
+        match serde_json::from_str(include_str!($dosiero)).unwrap() {
+            Value::Object(mapo) => mapo,
+            _ => unreachable!()
+        }
+    }
+}
+
+macro_rules! traduko_el_mapo {
+    ($vorto:expr, $mapo:expr)  => {
+        if $mapo.contains_key($vorto) {
+            match &$mapo[$vorto] {
+                Value::String(traduko) => Some(json!({ $vorto: traduko })),
+                _ => unreachable!(),
+            }
+        } else {
+            None
+        }
+    }
+}
+
+
+lazy_static! {
+    static ref AFIKSOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/afiksoj.json");
+    static ref ADJEKTIVOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/adjektivoj.json");
+    static ref KONSTANTAJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/konstantaj.json");
+    static ref PRONOMOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/pronomoj.json");
+    static ref SUBSTANTIVOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/substantivoj.json");
+    static ref TABEL_VORTOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/tabelvortoj.json");
+    static ref VERBOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/verboj.json");
 }
 
 #[derive(Debug, PartialEq)]
@@ -143,10 +165,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
 }
 
 fn gramatika(vorto: &str) -> Option<Value> {
-    match &KONSTANTAJ[vorto] {
-        Value::String(traduko) => Some(json!({ vorto: traduko })),
-        _ => None,
-    }
+    traduko_el_mapo!(vorto, KONSTANTAJ)
 }
 
 fn tabel_vorto(vorto: &str) -> Option<Value> {
@@ -162,10 +181,7 @@ fn tabel_vorto(vorto: &str) -> Option<Value> {
 
     let vorto = trancxi!(vorto, fino);
 
-    match &TABEL_VORTOJ[vorto] {
-        Value::String(traduko) => Some(json!({ vorto: traduko })),
-        _ => None,
-    }
+    traduko_el_mapo!(vorto, TABEL_VORTOJ)
 }
 
 fn pronomo(vorto: &str) -> Option<Value> {
@@ -183,29 +199,39 @@ fn pronomo(vorto: &str) -> Option<Value> {
 
     let vorto = trancxi!(vorto, fino);
 
-    match &PRONOMOJ[vorto] {
-        Value::String(traduko) => Some(json!({ vorto: traduko })),
-        _ => None,
-    }
+    traduko_el_mapo!(vorto, PRONOMOJ)
 }
 
 fn radiko(vorto: &str) -> Value {
     simpla_radiko(vorto)
 }
 
+fn subradikoj(vorto: &str) -> Option<Value> {
+
+    //for vorto in ADJEKTIVOJ + SUBSTANTIVOJ + ... {
+    //    rikure alvoki la progragon por atingi ilin.
+    //
+    //}
+    None
+}
+
 fn simpla_radiko(radiko: &str) -> Value {
     // Kontrolu ĉu vorto estas en normala listo.
-    match &ADJEKTIVOJ[radiko] {
-        Value::String(traduko) => return json!({ radiko: traduko }),
-        _ => (),
+    match traduko_el_mapo!(radiko, ADJEKTIVOJ) {
+        Some(json) => return json,
+        _ => ()
     }
-    match &SUBSTANTIVOJ[radiko] {
-        Value::String(traduko) => return json!({ radiko: traduko }),
-        _ => (),
+    match traduko_el_mapo!(radiko, ADJEKTIVOJ) {
+        Some(json) => return json,
+        _ => ()
     }
-    match &VERBOJ[radiko] {
-        Value::String(traduko) => return json!({ radiko: traduko }),
-        _ => (),
+    match traduko_el_mapo!(radiko, SUBSTANTIVOJ) {
+        Some(json) => return json,
+        _ => ()
+    }
+    match traduko_el_mapo!(radiko, VERBOJ) {
+        Some(json) => return json,
+        _ => ()
     }
 
     json!({ radiko: "NE TROVITA" })

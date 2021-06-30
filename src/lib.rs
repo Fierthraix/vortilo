@@ -59,23 +59,11 @@ lazy_static! {
         .chain(VERBOJ.iter())
         .map(|(radiko, traduko)| (radiko.clone(), traduko.clone()))
         .collect();
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Vorto {
-    GramatikaVorto(Value),
-    Adjektivo(Value),
-    Substantivo(Value),
-    Adverbo(Value),
-    Verbo(Value),
-    Eraro,
-}
-
-enum VortSpeco {
-    Adjektivo,
-    Substantivo,
-    Adverbo,
-    Verbo,
+    static ref AKUZATIVA: Value = serde_json::from_str(r#"{ "n": "accusative" }"#).unwrap();
+    static ref PLURALA: Value = serde_json::from_str(r#"{ "j": "plural" }"#).unwrap();
+    static ref ADJEKTIVA: Value = serde_json::from_str(r#"{ "a": "adjective" }"#).unwrap();
+    static ref ADVERBA: Value = serde_json::from_str(r#"{ "e": "adverv" }"#).unwrap();
+    static ref SUBSTANTIVA: Value = serde_json::from_str(r#"{ "o": "noun" }"#).unwrap();
 }
 
 pub fn parsu_vorton(vorto: &str) -> Value {
@@ -99,84 +87,51 @@ pub fn parsu_vorton(vorto: &str) -> Value {
         return json!({});
     }
 
-    let (akuzativa, plurala, _speco, rez) = if vorto.ends_with('o') || vorto.ends_with('\'') {
+    // Kontrolu cxu vorto verbas.
+    if vorto.ends_with('s') || vorto.ends_with('i') {
+        return verbo(vorto);
+    }
+
+    // Pritrakti 'e', 'a', kaj 'o' vortojn.
+    let (akuzativa, plurala, speco, radiko) = if vorto.ends_with('o') || vorto.ends_with('\'') {
         (
             false,
             false,
-            VortSpeco::Substantivo,
+            SUBSTANTIVA.clone(),
             radiko(trancxi!(vorto, 1)),
         )
     } else if vorto.ends_with("oj") {
-        (
-            false,
-            true,
-            VortSpeco::Substantivo,
-            radiko(trancxi!(vorto, 2)),
-        )
+        (false, true, SUBSTANTIVA.clone(), radiko(trancxi!(vorto, 2)))
     } else if vorto.ends_with("on") {
-        (
-            true,
-            false,
-            VortSpeco::Substantivo,
-            radiko(trancxi!(vorto, 2)),
-        )
+        (true, false, SUBSTANTIVA.clone(), radiko(trancxi!(vorto, 2)))
     } else if vorto.ends_with("ojn") {
-        (
-            true,
-            true,
-            VortSpeco::Substantivo,
-            radiko(trancxi!(vorto, 3)),
-        )
+        (true, true, SUBSTANTIVA.clone(), radiko(trancxi!(vorto, 3)))
     } else if vorto.ends_with('a') {
-        (
-            false,
-            false,
-            VortSpeco::Adjektivo,
-            radiko(trancxi!(vorto, 1)),
-        )
+        (false, false, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 1)))
     } else if vorto.ends_with("aj") {
-        (
-            false,
-            true,
-            VortSpeco::Adjektivo,
-            radiko(trancxi!(vorto, 2)),
-        )
+        (false, true, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 2)))
     } else if vorto.ends_with("an") {
-        (
-            true,
-            false,
-            VortSpeco::Adjektivo,
-            radiko(trancxi!(vorto, 2)),
-        )
+        (true, false, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 2)))
     } else if vorto.ends_with("ajn") {
-        (true, true, VortSpeco::Adjektivo, radiko(trancxi!(vorto, 3)))
+        (true, true, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 3)))
     } else if vorto.ends_with("en") {
-        (false, true, VortSpeco::Adverbo, radiko(trancxi!(vorto, 2)))
+        (true, false, ADVERBA.clone(), radiko(trancxi!(vorto, 2)))
     } else if vorto.ends_with('e') {
-        (false, false, VortSpeco::Adverbo, radiko(trancxi!(vorto, 1)))
-    } else if vorto.ends_with('s') || vorto.ends_with('i') {
-        (false, false, VortSpeco::Verbo, verbo(vorto))
+        (false, false, ADVERBA.clone(), radiko(trancxi!(vorto, 1)))
     } else {
         return json!({});
     };
 
+    let mut rezulto = vec![radiko, speco];
+
     if plurala {
-        //rez.aldonu(pluralo)
+        rezulto.push(PLURALA.clone());
     }
     if akuzativa {
-        //rez.aldonu(akuzativo)
+        rezulto.push(AKUZATIVA.clone());
     }
 
-    /*
-    return match speco {
-        VortSpeco::Adjektivo => adjektivo(vorto),
-        VortSpeco::Substantivo => substantivo(vorto),
-        VortSpeco::Verbo => verbo(vorto),
-        VortSpeco::Adverbo => adverbo(vorto),
-        VortSpeco::GramatikaVorto => unreachable!(),
-    };
-    */
-    rez
+    Value::Array(rezulto)
 }
 
 fn gramatika(vorto: &str) -> Option<Value> {
@@ -184,7 +139,7 @@ fn gramatika(vorto: &str) -> Option<Value> {
 }
 
 fn tabel_vorto(vorto: &str) -> Option<Value> {
-    let (_akuzativa, _plurala, fino) = if vorto.ends_with("jn") {
+    let (akuzativa, plurala, fino) = if vorto.ends_with("jn") {
         (true, true, 2)
     } else if vorto.ends_with('j') {
         (false, true, 1)
@@ -196,11 +151,21 @@ fn tabel_vorto(vorto: &str) -> Option<Value> {
 
     let vorto = trancxi!(vorto, fino);
 
-    traduko_el_mapo!(vorto, TABEL_VORTOJ)
+    let traduko = traduko_el_mapo!(vorto, TABEL_VORTOJ)?;
+    let mut rezulto = vec![json!({ vorto: traduko })];
+
+    if plurala {
+        rezulto.push(PLURALA.clone());
+    }
+    if akuzativa {
+        rezulto.push(AKUZATIVA.clone());
+    }
+
+    Some(Value::Array(rezulto))
 }
 
 fn pronomo(vorto: &str) -> Option<Value> {
-    let (_poseda, _akuzativa, _plurala, fino) = if vorto.ends_with("ajn") {
+    let (poseda, akuzativa, plurala, fino) = if vorto.ends_with("ajn") {
         (true, true, true, 3)
     } else if vorto.ends_with("an") {
         (true, true, false, 2)
@@ -214,17 +179,30 @@ fn pronomo(vorto: &str) -> Option<Value> {
 
     let vorto = trancxi!(vorto, fino);
 
-    traduko_el_mapo!(vorto, PRONOMOJ)
+    let traduko = traduko_el_mapo!(vorto, PRONOMOJ)?;
+    let mut rezulto = vec![json!({ vorto: traduko })];
+
+    if poseda {
+        rezulto.push(serde_json::from_str(r#"{"a": "possesive"}"#).unwrap());
+    }
+    if plurala {
+        rezulto.push(PLURALA.clone());
+    }
+    if akuzativa {
+        rezulto.push(AKUZATIVA.clone());
+    }
+
+    Some(Value::Array(rezulto))
 }
 
 fn radiko(vorto: &str) -> Value {
-    match rikuro(vorto) {
+    match kunmetita(vorto) {
         Some(vektoro) => vektoro_al_mapo(vektoro),
         None => json!({}),
     }
 }
 
-fn rikuro(vorto: &str) -> Option<Vec<(String, Value)>> {
+fn kunmetita(vorto: &str) -> Option<Vec<(String, Value)>> {
     let mut indeksoj = vec![];
     let mut valuoj = vec![];
 
@@ -234,20 +212,17 @@ fn rikuro(vorto: &str) -> Option<Vec<(String, Value)>> {
     while nuna_indekso < vorto.len() {
         let ebla_vorto = &RADIKOJ[vorto_indesko].0; // Radiko ni volas provi.
         if vorto[nuna_indekso..].starts_with(ebla_vorto) {
-            // Sukceso -- vorto komencas kun radiko.
-            indeksoj.push((nuna_indekso, vorto_indesko)); // Aldonu l'informon al nia listo.
-            valuoj.push(RADIKOJ[vorto_indesko].clone()); // Ankaux konservi tradukon.
+            // Vorto komencas kun la radiko; aldonu gxin al nia list'.
+            indeksoj.push((nuna_indekso, vorto_indesko));
+            valuoj.push(RADIKOJ[vorto_indesko].clone());
 
-            nuna_indekso += ebla_vorto.len();
-            vorto_indesko = 0;
+            nuna_indekso += ebla_vorto.len(); // Movu al nova indekso.
+            vorto_indesko = 0; // Ni volas reprovi cxiun radikon.
         } else {
-            // Alie, gxi ne gxustis, do ni pliigu l'indekson.
-
+            // Alie, vorto ne gxustis, do ni pliigu tiun indekson.
             if vorto_indesko < RADIKOJ.len() - 1 {
-                // Kontrolu cxu ni penis cxiun vorton.
                 vorto_indesko += 1; // Se ne, pliigu l'indekson.
             } else {
-                // Ne penis cxiun vorton, do forjxeti lastan valuon, kaj reprovi.
                 if valuoj.is_empty() {
                     return None;
                 }
@@ -267,20 +242,42 @@ fn rikuro(vorto: &str) -> Option<Vec<(String, Value)>> {
 }
 
 fn verbo(vorto: &str) -> Value {
-    let (_rezulto, radik) = if vorto.ends_with('i') {
-        ("infinitive tense", trancxi!(vorto, 1))
+    let (tenso, radik) = if vorto.ends_with('i') {
+        (
+            serde_json::from_str(r#"{"i": "infinitive tense"}"#).unwrap(),
+            trancxi!(vorto, 1),
+        )
     } else if vorto.ends_with('u') {
-        ("imperative tense", trancxi!(vorto, 2))
+        (
+            serde_json::from_str(r#"{"u": "imperative tense"}"#).unwrap(),
+            trancxi!(vorto, 2),
+        )
     } else if vorto.ends_with("us") {
-        ("conditional tense", trancxi!(vorto, 2))
+        (
+            serde_json::from_str(r#"{"us": "conditional tense"}"#).unwrap(),
+            trancxi!(vorto, 2),
+        )
     } else if vorto.ends_with("is") {
-        ("past tense", trancxi!(vorto, 2))
+        (
+            serde_json::from_str(r#"{"is": "past tense"}"#).unwrap(),
+            trancxi!(vorto, 2),
+        )
     } else if vorto.ends_with("as") {
-        ("present tense", trancxi!(vorto, 2))
+        (
+            serde_json::from_str(r#"{"as": "present tense"}"#).unwrap(),
+            trancxi!(vorto, 2),
+        )
     } else if vorto.ends_with("os") {
-        ("future tense", trancxi!(vorto, 2))
+        (
+            serde_json::from_str(r#"{"os": "future tense"}"#).unwrap(),
+            trancxi!(vorto, 2),
+        )
     } else {
         return json!({});
     };
-    json!({ vorto: radiko(radik) })
+
+    let mut rezulto = vec![json!({ vorto: radiko(radik) })];
+    rezulto.push(tenso);
+
+    Value::Array(rezulto)
 }

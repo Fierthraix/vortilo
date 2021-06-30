@@ -64,6 +64,7 @@ lazy_static! {
     static ref ADJEKTIVA: Value = serde_json::from_str(r#"{ "a": "adjective" }"#).unwrap();
     static ref ADVERBA: Value = serde_json::from_str(r#"{ "e": "adverv" }"#).unwrap();
     static ref SUBSTANTIVA: Value = serde_json::from_str(r#"{ "o": "noun" }"#).unwrap();
+    static ref POEM_SUBSTANTIVA: Value = serde_json::from_str(r#"{ "'": "noun" }"#).unwrap();
 }
 
 pub fn parsu_vorton(vorto: &str) -> Value {
@@ -93,11 +94,18 @@ pub fn parsu_vorton(vorto: &str) -> Value {
     }
 
     // Pritrakti 'e', 'a', kaj 'o' vortojn.
-    let (akuzativa, plurala, speco, radiko) = if vorto.ends_with('o') || vorto.ends_with('\'') {
+    let (akuzativa, plurala, speco, radiko) = if vorto.ends_with('o') {
         (
             false,
             false,
             SUBSTANTIVA.clone(),
+            radiko(trancxi!(vorto, 1)),
+        )
+    } else if vorto.ends_with('\'') {
+        (
+            false,
+            false,
+            POEM_SUBSTANTIVA.clone(),
             radiko(trancxi!(vorto, 1)),
         )
     } else if vorto.ends_with("oj") {
@@ -135,7 +143,11 @@ pub fn parsu_vorton(vorto: &str) -> Value {
 }
 
 fn gramatika(vorto: &str) -> Option<Value> {
-    traduko_el_mapo!(vorto, KONSTANTAJ)
+    if let Some(gramatika_vorto) = traduko_el_mapo!(vorto, KONSTANTAJ) {
+        Some(Value::Array(vec![gramatika_vorto]))
+    } else {
+        None
+    }
 }
 
 fn tabel_vorto(vorto: &str) -> Option<Value> {
@@ -280,4 +292,40 @@ fn verbo(vorto: &str) -> Value {
     rezulto.push(tenso);
 
     Value::Array(rezulto)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn testu_vortilon() {
+        let frazo = "mi estas simpla homo kiu ŝatas la plej bonajn aĵojn en la viv' morgaŭ";
+
+        let vortoj = frazo
+            .split_whitespace()
+            .map(|vorto| parsu_vorton(vorto))
+            .collect::<Vec<Value>>();
+
+        println!("{}", Value::Array(vortoj.clone()).to_string());
+
+        let atendita: Value = serde_json::from_str(r#"[
+            [{"mi":{"mi":"I/me"}}],
+            [{"estas":[{"est":"you are"}]},{"as":"present tense"}],
+            [[{"simpl":"simple"}],{"a":"adjective"}],
+            [[{"hom":"man"}],{"o":"noun"}],
+            [{"kiu":{"kiu":"who/which"}}],
+            [{"ŝatas":[{"ŝat":"to like"}]},{"as":"present tense"}],
+            [{"la":"the"}],
+            [{"plej":"most"}],
+            [[{"bon":"good"}],{"a":"adjective"},{"j":"plural"},{"n":"accusative"}],
+            [[{"aĵ":"thing, concrete manifestation"}],{"o":"noun"},{"j":"plural"},{"n":"accusative"}],
+            [{"en":"in"}],
+            [{"la":"the"}],
+            [[{"viv":"live"}],{"'":"noun"}],
+            [{"morgaŭ":"tomorrow"}]
+        ]"#).unwrap();
+
+        assert_eq!(Value::Array(vortoj), atendita);
+    }
 }

@@ -72,7 +72,6 @@ pub enum Vorto {
 }
 
 enum VortSpeco {
-    GramatikaVorto,
     Adjektivo,
     Substantivo,
     Adverbo,
@@ -81,21 +80,18 @@ enum VortSpeco {
 
 pub fn parsu_vorton(vorto: &str) -> Value {
     // Kontrolu ĉu la vorto estas gramatika.
-    match gramatika(vorto) {
-        Some(valuo) => return valuo,
-        None => (),
+    if let Some(valuo) = gramatika(vorto) {
+        return valuo;
     }
 
     // Trovu tabelvortojn.
-    match tabel_vorto(vorto) {
-        Some(valuo) => return valuo,
-        None => (),
+    if let Some(valuo) = tabel_vorto(vorto) {
+        return valuo;
     }
 
     // Trovu pronomojn.
-    match pronomo(vorto) {
-        Some(valuo) => return valuo,
-        None => (),
+    if let Some(valuo) = pronomo(vorto) {
+        return valuo;
     }
 
     // Sekvonta kontrolo bezonas almenaŭ 3 literojn.
@@ -103,7 +99,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
         return json!({});
     }
 
-    let (akuzativa, plurala, speco, rez) = if vorto.ends_with("o") || vorto.ends_with("'") {
+    let (akuzativa, plurala, _speco, rez) = if vorto.ends_with('o') || vorto.ends_with('\'') {
         (
             false,
             false,
@@ -131,7 +127,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
             VortSpeco::Substantivo,
             radiko(trancxi!(vorto, 3)),
         )
-    } else if vorto.ends_with("a") {
+    } else if vorto.ends_with('a') {
         (
             false,
             false,
@@ -156,9 +152,9 @@ pub fn parsu_vorton(vorto: &str) -> Value {
         (true, true, VortSpeco::Adjektivo, radiko(trancxi!(vorto, 3)))
     } else if vorto.ends_with("en") {
         (false, true, VortSpeco::Adverbo, radiko(trancxi!(vorto, 2)))
-    } else if vorto.ends_with("e") {
+    } else if vorto.ends_with('e') {
         (false, false, VortSpeco::Adverbo, radiko(trancxi!(vorto, 1)))
-    } else if vorto.ends_with("s") || vorto.ends_with("i") {
+    } else if vorto.ends_with('s') || vorto.ends_with('i') {
         (false, false, VortSpeco::Verbo, verbo(vorto))
     } else {
         return json!({});
@@ -188,11 +184,11 @@ fn gramatika(vorto: &str) -> Option<Value> {
 }
 
 fn tabel_vorto(vorto: &str) -> Option<Value> {
-    let (akuzativa, plurala, fino) = if vorto.ends_with("jn") {
+    let (_akuzativa, _plurala, fino) = if vorto.ends_with("jn") {
         (true, true, 2)
-    } else if vorto.ends_with("j") {
+    } else if vorto.ends_with('j') {
         (false, true, 1)
-    } else if vorto.ends_with("n") {
+    } else if vorto.ends_with('n') {
         (true, false, 1)
     } else {
         (false, false, 0)
@@ -204,13 +200,13 @@ fn tabel_vorto(vorto: &str) -> Option<Value> {
 }
 
 fn pronomo(vorto: &str) -> Option<Value> {
-    let (poseda, akuzativa, plurala, fino) = if vorto.ends_with("ajn") {
+    let (_poseda, _akuzativa, _plurala, fino) = if vorto.ends_with("ajn") {
         (true, true, true, 3)
     } else if vorto.ends_with("an") {
         (true, true, false, 2)
-    } else if vorto.ends_with("a") {
+    } else if vorto.ends_with('a') {
         (true, false, false, 1)
-    } else if vorto.ends_with("n") {
+    } else if vorto.ends_with('n') {
         (false, true, false, 1)
     } else {
         (false, false, false, 0)
@@ -252,7 +248,7 @@ fn rikuro(vorto: &str) -> Option<Vec<(String, Value)>> {
                 vorto_indesko += 1; // Se ne, pliigu l'indekson.
             } else {
                 // Ne penis cxiun vorton, do forjxeti lastan valuon, kaj reprovi.
-                if valuoj.len() == 0 {
+                if valuoj.is_empty() {
                     return None;
                 }
                 valuoj.pop(); // Forjxeti valuon.
@@ -271,18 +267,18 @@ fn rikuro(vorto: &str) -> Option<Vec<(String, Value)>> {
 }
 
 fn verbo(vorto: &str) -> Value {
-    let (rezulto, radik) = if vorto.ends_with("i") {
-        ("A", trancxi!(vorto, 1))
-    } else if vorto.ends_with("u") {
-        ("A", trancxi!(vorto, 2))
+    let (_rezulto, radik) = if vorto.ends_with('i') {
+        ("infinitive tense", trancxi!(vorto, 1))
+    } else if vorto.ends_with('u') {
+        ("imperative tense", trancxi!(vorto, 2))
     } else if vorto.ends_with("us") {
-        ("A", trancxi!(vorto, 2))
+        ("conditional tense", trancxi!(vorto, 2))
     } else if vorto.ends_with("is") {
-        ("A", trancxi!(vorto, 2))
+        ("past tense", trancxi!(vorto, 2))
     } else if vorto.ends_with("as") {
-        ("A", trancxi!(vorto, 2))
+        ("present tense", trancxi!(vorto, 2))
     } else if vorto.ends_with("os") {
-        ("A", trancxi!(vorto, 2))
+        ("future tense", trancxi!(vorto, 2))
     } else {
         return json!({});
     };

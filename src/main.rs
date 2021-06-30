@@ -15,4 +15,5 @@ fn main() {
     for vorto in dosiero.split_whitespace() {
         println!("{} => {:?}", vorto, parsu_vorton(vorto));
     }
+    println!("{} => {:?}", "irantan", parsu_vorton("irantan"));
 }

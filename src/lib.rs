@@ -13,13 +13,13 @@ macro_rules! alsxutu_dosieron {
     ($dosiero:expr) => {
         match serde_json::from_str(include_str!($dosiero)).unwrap() {
             Value::Object(mapo) => mapo,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
-    }
+    };
 }
 
 macro_rules! traduko_el_mapo {
-    ($vorto:expr, $mapo:expr)  => {
+    ($vorto:expr, $mapo:expr) => {
         if $mapo.contains_key($vorto) {
             match &$mapo[$vorto] {
                 Value::String(traduko) => Some(json!({ $vorto: traduko })),
@@ -28,9 +28,18 @@ macro_rules! traduko_el_mapo {
         } else {
             None
         }
-    }
+    };
 }
 
+fn vektoro_al_mapo(vektoro: Vec<(String, Value)>) -> Value {
+    let mut vek = Vec::with_capacity(vektoro.len());
+    for (indekso, value) in vektoro.iter() {
+        let mut mapo = Map::with_capacity(1);
+        mapo.insert(indekso.clone(), value.clone());
+        vek.push(Value::Object(mapo))
+    }
+    Value::Array(vek)
+}
 
 lazy_static! {
     static ref AFIKSOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/afiksoj.json");
@@ -203,38 +212,72 @@ fn pronomo(vorto: &str) -> Option<Value> {
 }
 
 fn radiko(vorto: &str) -> Value {
-    simpla_radiko(vorto)
+    match simpla_radiko(vorto) {
+        Some(valuo) => return valuo,
+        None => (),
+    }
+    match subradikoj(vorto) {
+        Some(vektoro) => vektoro_al_mapo(vektoro),
+        None => json!({}),
+    }
 }
 
-fn subradikoj(vorto: &str) -> Option<Value> {
-
-    //for vorto in ADJEKTIVOJ + SUBSTANTIVOJ + ... {
-    //    rikure alvoki la progragon por atingi ilin.
-    //
-    //}
-    None
+fn subradikoj(vorto: &str) -> Option<Vec<(String, Value)>> {
+    let mut valuoj = vec![];
+    let mut prefiksoj = vec![false; vorto.as_bytes().iter().count()];
+    let mut malnova_listo;
+    prefiksoj[0] = true;
+    loop {
+        malnova_listo = prefiksoj.clone();
+        for (radiko, traduko) in ADJEKTIVOJ
+            .iter()
+            .chain(AFIKSOJ.iter())
+            .chain(ADJEKTIVOJ.iter())
+            .chain(KONSTANTAJ.iter())
+            .chain(PRONOMOJ.iter())
+            .chain(SUBSTANTIVOJ.iter())
+            .chain(TABEL_VORTOJ.iter())
+            .chain(VERBOJ.iter())
+        {
+            let mut indekso = 0;
+            while indekso < prefiksoj.len() {
+                if prefiksoj[indekso] && vorto[indekso..].starts_with(radiko) {
+                    valuoj.push((radiko.clone(), traduko.clone()));
+                    // Se la radiko finigas la vorton, ni finiĝis.
+                    if &vorto[indekso..] == radiko {
+                        return Some(valuoj);
+                    }
+                    prefiksoj[indekso + radiko.len()] = true;
+                }
+                indekso += 1;
+            }
+        }
+        if malnova_listo == prefiksoj {
+            return None;
+        }
+    }
 }
 
-fn simpla_radiko(radiko: &str) -> Value {
+fn simpla_radiko(radiko: &str) -> Option<Value> {
     // Kontrolu ĉu vorto estas en normala listo.
     match traduko_el_mapo!(radiko, ADJEKTIVOJ) {
-        Some(json) => return json,
-        _ => ()
+        Some(json) => return Some(json),
+        _ => (),
     }
     match traduko_el_mapo!(radiko, ADJEKTIVOJ) {
-        Some(json) => return json,
-        _ => ()
+        Some(json) => return Some(json),
+        _ => (),
     }
     match traduko_el_mapo!(radiko, SUBSTANTIVOJ) {
-        Some(json) => return json,
-        _ => ()
+        Some(json) => return Some(json),
+        _ => (),
     }
     match traduko_el_mapo!(radiko, VERBOJ) {
-        Some(json) => return json,
-        _ => ()
+        Some(json) => return Some(json),
+        _ => (),
     }
 
-    json!({ radiko: "NE TROVITA" })
+    None
 }
 
 fn verbo(vorto: &str) -> Value {
@@ -253,7 +296,5 @@ fn verbo(vorto: &str) -> Value {
     } else {
         return json!({});
     };
-    json!({
-        vorto: radiko(radik)
-    })
+    json!({ vorto: radiko(radik) })
 }

@@ -26,5 +26,11 @@
     "iĝ": "become",
     "uj": "container, tree, country",
     "ul": "person",
-    "um": "indefinite meaning"
+    "um": "indefinite meaning",
+    "ant": "present",
+    "int": "past",
+    "ont": "future",
+    "at": "present",
+    "it": "past",
+    "ot": "future"
 }

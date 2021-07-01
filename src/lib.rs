@@ -88,7 +88,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
         return json!({});
     }
 
-    // Kontrolu cxu vorto verbas.
+    // Kontrolu ĉu vorto verbas.
     if vorto.ends_with('s') || vorto.ends_with('i') {
         return verbo(vorto);
     }
@@ -224,21 +224,21 @@ fn kunmetita(vorto: &str) -> Option<Vec<(String, Value)>> {
     while nuna_indekso < vorto.len() {
         let ebla_vorto = &RADIKOJ[vorto_indesko].0; // Radiko ni volas provi.
         if vorto[nuna_indekso..].starts_with(ebla_vorto) {
-            // Vorto komencas kun la radiko; aldonu gxin al nia list'.
+            // Vorto komencas kun la radiko; aldonu ĝin al nia list'.
             indeksoj.push((nuna_indekso, vorto_indesko));
             valuoj.push(RADIKOJ[vorto_indesko].clone());
 
             nuna_indekso += ebla_vorto.len(); // Movu al nova indekso.
-            vorto_indesko = 0; // Ni volas reprovi cxiun radikon.
+            vorto_indesko = 0; // Ni volas reprovi ĉiun radikon.
         } else {
-            // Alie, vorto ne gxustis, do ni pliigu tiun indekson.
+            // Alie, vorto ne ĝustis, do ni pliigu tiun indekson.
             if vorto_indesko < RADIKOJ.len() - 1 {
                 vorto_indesko += 1; // Se ne, pliigu l'indekson.
             } else {
                 if valuoj.is_empty() {
                     return None;
                 }
-                valuoj.pop(); // Forjxeti valuon.
+                valuoj.pop(); // Forĵeti valuon.
                 let nov_indekstoj = indeksoj.pop().unwrap(); // Restarigi al lastaj indeksoj.
                 nuna_indekso = nov_indekstoj.0;
                 vorto_indesko = nov_indekstoj.1 + 1;

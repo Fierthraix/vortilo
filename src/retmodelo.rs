@@ -81,9 +81,14 @@ impl RetPaĝo {
                 _ => return html! { <h1>{format!("MAPO NE EKZISTAS {:?}", mapo)}</h1> },
             };
             let (radiko, traduko) = mapo.iter().next().unwrap();
+            let traduko = if let Value::String(traduko) = traduko {
+                traduko
+            } else {
+                unreachable!()
+            };
             html! {
                 <tr>
-                    <td><em>{radiko}</em></td>
+                    <td>{radiko}</td>
                     <td><em>{traduko}</em></td>
                 </tr>
             }

@@ -15,24 +15,11 @@ macro_rules! alsxutu_dosieron {
     };
 }
 
-macro_rules! nur_traduko_el_mapo {
-    ($vorto:expr, $mapo:expr) => {
-        if $mapo.contains_key($vorto) {
-            match &$mapo[$vorto] {
-                Value::String(traduko) => Some(traduko),
-                _ => unreachable!(),
-            }
-        } else {
-            None
-        }
-    };
-}
-
 macro_rules! traduko_el_mapo {
     ($vorto:expr, $mapo:expr) => {
         if $mapo.contains_key($vorto) {
             match &$mapo[$vorto] {
-                Value::String(traduko) => Some(json!({ $vorto: traduko })),
+                Value::String(traduko) => Some(traduko),
                 _ => unreachable!(),
             }
         } else {
@@ -82,7 +69,7 @@ pub fn parsu_frazon(frazo: &str) -> Value {
     let mut rezultoj = vec![];
     for vortaĵo in frazo.split_whitespace() {
         let vorto = vortaĵo.trim_end_matches(&[',', ';', '.', '-'][..]);
-        rezultoj.push(parsu_vorton(vorto));
+        rezultoj.push(parsu_vorton(&vorto.to_lowercase()));
     }
 
     Value::Array(rezultoj)
@@ -106,7 +93,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
 
     // Sekvonta kontrolo bezonas almenaŭ 3 literojn.
     if vorto.len() < 3 {
-        return json!({});
+        return Value::Array(vec![json!({vorto: ""})]);
     }
 
     // Kontrolu ĉu vorto verbas.
@@ -138,10 +125,9 @@ pub fn parsu_vorton(vorto: &str) -> Value {
     } else if vorto.ends_with('e') {
         (false, false, ADVERBA.clone(), trancxi!(vorto, 1))
     } else {
-        return json!({});
+        return Value::Array(vec![json!({vorto: ""})]);
     };
 
-    //let mut rezulto = radiko, speco];
     let mut rezulto = radiko(radik);
     rezulto.push(speco);
 
@@ -156,11 +142,8 @@ pub fn parsu_vorton(vorto: &str) -> Value {
 }
 
 fn gramatika(vorto: &str) -> Option<Value> {
-    if let Some(gramatika_vorto) = traduko_el_mapo!(vorto, KONSTANTAJ) {
-        Some(Value::Array(vec![gramatika_vorto]))
-    } else {
-        None
-    }
+    let traduko = traduko_el_mapo!(vorto, KONSTANTAJ)?;
+    Some(Value::Array(vec![json!({ vorto: traduko })]))
 }
 
 fn tabel_vorto(vorto: &str) -> Option<Value> {
@@ -176,7 +159,7 @@ fn tabel_vorto(vorto: &str) -> Option<Value> {
 
     let vorto = trancxi!(vorto, fino);
 
-    let traduko = nur_traduko_el_mapo!(vorto, TABEL_VORTOJ)?;
+    let traduko = traduko_el_mapo!(vorto, TABEL_VORTOJ)?;
     let mut rezulto = vec![json!({ vorto: traduko })];
 
     if plurala {
@@ -205,7 +188,7 @@ fn pronomo(vorto: &str) -> Option<Value> {
     let vorto = trancxi!(vorto, fino);
 
     let mut rezulto = vec![];
-    let traduko = nur_traduko_el_mapo!(vorto, PRONOMOJ)?;
+    let traduko = traduko_el_mapo!(vorto, PRONOMOJ)?;
     rezulto.push(json!({ vorto: traduko }));
 
     if poseda {

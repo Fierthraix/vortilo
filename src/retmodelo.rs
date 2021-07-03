@@ -39,11 +39,10 @@ impl Component for RetPaĝo {
     }
 
     fn view(&self) -> Html {
-        //let traduko = if let Some(traduko) = &self.traduko { to_string_pretty(traduko).unwrap() } else { String::new() };
         let traduko = if let Some(traduko) = &self.traduko {
             match traduko {
                 Value::Array(frazo) => frazo,
-                _ => return html! { <h1>{"TRADUKO WASN'T AN ARRAY"}</h1> },
+                _ => return html! { <h1>{"TRADUKO NE ESTIS VEKTORO"}</h1> },
             }
         } else {
             return html! {
@@ -64,7 +63,10 @@ impl Component for RetPaĝo {
                 <textarea readonly=true
                     value=Value::Array(traduko.to_vec()).to_string()>
                 </textarea>
-                <p>{for traduko.iter().zip(self.enigo.split_whitespace()).map(|(traduko, enigo)| RetPaĝo::bildigi_vorton(enigo, traduko))}</p>
+                <p>{for traduko.iter()
+                    .zip(self.enigo.split_whitespace())
+                    .map(|(traduko, enigo)| RetPaĝo::bildigi_vorton(enigo, traduko))}
+                </p>
             </div>
         }
     }
@@ -75,13 +77,13 @@ impl RetPaĝo {
         let listo = if let Value::Array(listo) = traduko {
             listo
         } else {
-            return html! { <h1>{"LISTO WASNT A LIST"}</h1> };
+            return html! { <h1>{format!("LISTO NE ESTIS LISTO {:?}", traduko)}</h1> };
         };
 
         let tabel_vico = |mapo: &Value| {
             let mapo = match mapo {
                 Value::Object(mapo) => mapo,
-                _ => return html! { <h1>{"MAPO DOESN'T EXIST"}</h1> },
+                _ => return html! { <h1>{"MAPO NE EKZISTAS"}</h1> },
             };
             let (radiko, traduko) = mapo.iter().next().unwrap();
             html! {

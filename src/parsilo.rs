@@ -15,6 +15,19 @@ macro_rules! alsxutu_dosieron {
     };
 }
 
+macro_rules! nur_traduko_el_mapo {
+    ($vorto:expr, $mapo:expr) => {
+        if $mapo.contains_key($vorto) {
+            match &$mapo[$vorto] {
+                Value::String(traduko) => Some(traduko),
+                _ => unreachable!(),
+            }
+        } else {
+            None
+        }
+    };
+}
+
 macro_rules! traduko_el_mapo {
     ($vorto:expr, $mapo:expr) => {
         if $mapo.contains_key($vorto) {
@@ -28,14 +41,14 @@ macro_rules! traduko_el_mapo {
     };
 }
 
-fn vektoro_al_mapo(vektoro: Vec<(String, Value)>) -> Value {
+fn vektoro_al_mapo(vektoro: Vec<(String, Value)>) -> Vec<Value> {
     let mut vek = Vec::with_capacity(vektoro.len());
     for (indekso, value) in vektoro.iter() {
         let mut mapo = Map::with_capacity(1);
         mapo.insert(indekso.clone(), value.clone());
         vek.push(Value::Object(mapo))
     }
-    Value::Array(vek)
+    vek
 }
 
 lazy_static! {
@@ -61,7 +74,8 @@ lazy_static! {
     static ref ADJEKTIVA: Value = serde_json::from_str(r#"{ "a": "adjective" }"#).unwrap();
     static ref ADVERBA: Value = serde_json::from_str(r#"{ "e": "adverb" }"#).unwrap();
     static ref SUBSTANTIVA: Value = serde_json::from_str(r#"{ "o": "noun" }"#).unwrap();
-    static ref POEM_SUBSTANTIVA: Value = serde_json::from_str(r#"{ "'": "poetry noun ending" }"#).unwrap();
+    static ref POEM_SUBSTANTIVA: Value =
+        serde_json::from_str(r#"{ "'": "poetry noun ending" }"#).unwrap();
 }
 
 pub fn parsu_frazon(frazo: &str) -> Value {
@@ -101,43 +115,35 @@ pub fn parsu_vorton(vorto: &str) -> Value {
     }
 
     // Pritrakti 'e', 'a', kaj 'o' vortojn.
-    let (akuzativa, plurala, speco, radiko) = if vorto.ends_with('o') {
-        (
-            false,
-            false,
-            SUBSTANTIVA.clone(),
-            radiko(trancxi!(vorto, 1)),
-        )
+    let (akuzativa, plurala, speco, radik) = if vorto.ends_with('o') {
+        (false, false, SUBSTANTIVA.clone(), trancxi!(vorto, 1))
     } else if vorto.ends_with('\'') {
-        (
-            false,
-            false,
-            POEM_SUBSTANTIVA.clone(),
-            radiko(trancxi!(vorto, 1)),
-        )
+        (false, false, POEM_SUBSTANTIVA.clone(), trancxi!(vorto, 1))
     } else if vorto.ends_with("oj") {
-        (false, true, SUBSTANTIVA.clone(), radiko(trancxi!(vorto, 2)))
+        (false, true, SUBSTANTIVA.clone(), trancxi!(vorto, 2))
     } else if vorto.ends_with("on") {
-        (true, false, SUBSTANTIVA.clone(), radiko(trancxi!(vorto, 2)))
+        (true, false, SUBSTANTIVA.clone(), trancxi!(vorto, 2))
     } else if vorto.ends_with("ojn") {
-        (true, true, SUBSTANTIVA.clone(), radiko(trancxi!(vorto, 3)))
+        (true, true, SUBSTANTIVA.clone(), trancxi!(vorto, 3))
     } else if vorto.ends_with('a') {
-        (false, false, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 1)))
+        (false, false, ADJEKTIVA.clone(), trancxi!(vorto, 1))
     } else if vorto.ends_with("aj") {
-        (false, true, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 2)))
+        (false, true, ADJEKTIVA.clone(), trancxi!(vorto, 2))
     } else if vorto.ends_with("an") {
-        (true, false, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 2)))
+        (true, false, ADJEKTIVA.clone(), trancxi!(vorto, 2))
     } else if vorto.ends_with("ajn") {
-        (true, true, ADJEKTIVA.clone(), radiko(trancxi!(vorto, 3)))
+        (true, true, ADJEKTIVA.clone(), trancxi!(vorto, 3))
     } else if vorto.ends_with("en") {
-        (true, false, ADVERBA.clone(), radiko(trancxi!(vorto, 2)))
+        (true, false, ADVERBA.clone(), trancxi!(vorto, 2))
     } else if vorto.ends_with('e') {
-        (false, false, ADVERBA.clone(), radiko(trancxi!(vorto, 1)))
+        (false, false, ADVERBA.clone(), trancxi!(vorto, 1))
     } else {
         return json!({});
     };
 
-    let mut rezulto = vec![radiko, speco];
+    //let mut rezulto = radiko, speco];
+    let mut rezulto = radiko(radik);
+    rezulto.push(speco);
 
     if plurala {
         rezulto.push(PLURALA.clone());
@@ -170,7 +176,7 @@ fn tabel_vorto(vorto: &str) -> Option<Value> {
 
     let vorto = trancxi!(vorto, fino);
 
-    let traduko = traduko_el_mapo!(vorto, TABEL_VORTOJ)?;
+    let traduko = nur_traduko_el_mapo!(vorto, TABEL_VORTOJ)?;
     let mut rezulto = vec![json!({ vorto: traduko })];
 
     if plurala {
@@ -198,8 +204,9 @@ fn pronomo(vorto: &str) -> Option<Value> {
 
     let vorto = trancxi!(vorto, fino);
 
-    let traduko = traduko_el_mapo!(vorto, PRONOMOJ)?;
-    let mut rezulto = vec![json!({ vorto: traduko })];
+    let mut rezulto = vec![];
+    let traduko = nur_traduko_el_mapo!(vorto, PRONOMOJ)?;
+    rezulto.push(json!({ vorto: traduko }));
 
     if poseda {
         rezulto.push(serde_json::from_str(r#"{"a": "possesive"}"#).unwrap());
@@ -214,10 +221,10 @@ fn pronomo(vorto: &str) -> Option<Value> {
     Some(Value::Array(rezulto))
 }
 
-fn radiko(vorto: &str) -> Value {
+fn radiko(vorto: &str) -> Vec<Value> {
     match kunmetita(vorto) {
         Some(vektoro) => vektoro_al_mapo(vektoro),
-        None => json!({}),
+        None => vec![],
     }
 }
 
@@ -295,7 +302,7 @@ fn verbo(vorto: &str) -> Value {
         return json!({});
     };
 
-    let mut rezulto = vec![json!({ vorto: radiko(radik) })];
+    let mut rezulto = radiko(radik);
     rezulto.push(tenso);
 
     Value::Array(rezulto)

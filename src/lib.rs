@@ -7,8 +7,8 @@ use yew::prelude::*;
 mod parsilo;
 mod retmodelo;
 
-pub use parsilo::parsu_vorton;
 pub use parsilo::parsu_frazon;
+pub use parsilo::parsu_vorton;
 use retmodelo::RetPaĝo;
 
 #[wasm_bindgen(start)]

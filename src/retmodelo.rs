@@ -39,29 +39,24 @@ impl Component for RetPaĝo {
     }
 
     fn view(&self) -> Html {
+        let nula_vektoro = Vec::with_capacity(0);
         let traduko = if let Some(traduko) = &self.traduko {
             match traduko {
                 Value::Array(frazo) => frazo,
-                _ => return html! { <h1>{"TRADUKO NE ESTIS VEKTORO"}</h1> },
+                _ => unreachable!(),
             }
         } else {
-            return html! {
-                <div>
-                    <textarea
-                        oninput=self.ligilo.callback(|enigo: InputData| Ago::Parsu(enigo.value))>
-                    </textarea>
-                    <textarea readonly=true></textarea>
-                </div>
-            };
+            &nula_vektoro
         };
 
         html! {
             <div>
-                <textarea
+                <textarea class="tekstejo" rows="7" cols="50"
                     oninput=self.ligilo.callback(|enigo: InputData| Ago::Parsu(enigo.value))>
                 </textarea>
-                <textarea readonly=true
-                    value=Value::Array(traduko.to_vec()).to_string()>
+                <br />
+                <textarea readonly=true class="tekstejo" rows="7" cols="50"
+                    value=Value::Array(traduko.clone()).to_string()>
                 </textarea>
                 <p>{for traduko.iter()
                     .zip(self.enigo.split_whitespace())

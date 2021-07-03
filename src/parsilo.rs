@@ -208,7 +208,7 @@ fn radiko(vorto: &str) -> Vec<Value> {
                 vek.push(Value::Object(mapo));
             }
             vek
-        },
+        }
         None => vec![],
     }
 }

@@ -83,7 +83,7 @@ impl RetPaĝo {
         let tabel_vico = |mapo: &Value| {
             let mapo = match mapo {
                 Value::Object(mapo) => mapo,
-                _ => return html! { <h1>{"MAPO NE EKZISTAS"}</h1> },
+                _ => return html! { <h1>{format!("MAPO NE EKZISTAS {:?}", mapo)}</h1> },
             };
             let (radiko, traduko) = mapo.iter().next().unwrap();
             html! {

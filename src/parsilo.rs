@@ -68,7 +68,7 @@ lazy_static! {
 pub fn parsu_frazon(frazo: &str) -> Value {
     let mut rezultoj = vec![];
     for vortaĵo in frazo.split_whitespace() {
-        let vorto = vortaĵo.trim_end_matches(&[',', ';', '.', '-'][..]);
+        let vorto = vortaĵo.trim_end_matches(&[',', ';', '.', '-', '?', '!'][..]);
         rezultoj.push(parsu_vorton(&vorto.to_lowercase()));
     }
 
@@ -129,6 +129,10 @@ pub fn parsu_vorton(vorto: &str) -> Value {
     };
 
     let mut rezulto = radiko(radik);
+    if rezulto.len() == 0 {
+        rezulto.push(json!({radik: ""}));
+    }
+
     rezulto.push(speco);
 
     if plurala {

@@ -28,16 +28,6 @@ macro_rules! traduko_el_mapo {
     };
 }
 
-fn vektoro_al_mapo(vektoro: Vec<(String, Value)>) -> Vec<Value> {
-    let mut vek = Vec::with_capacity(vektoro.len());
-    for (indekso, value) in vektoro.iter() {
-        let mut mapo = Map::with_capacity(1);
-        mapo.insert(indekso.clone(), value.clone());
-        vek.push(Value::Object(mapo))
-    }
-    vek
-}
-
 lazy_static! {
     static ref AFIKSOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/afiksoj.json");
     static ref ADJEKTIVOJ: Map<String, Value> = alsxutu_dosieron!("../vortoj/adjektivoj.json");
@@ -129,7 +119,7 @@ pub fn parsu_vorton(vorto: &str) -> Value {
     };
 
     let mut rezulto = radiko(radik);
-    if rezulto.len() == 0 {
+    if rezulto.is_empty() {
         rezulto.push(json!({radik: ""}));
     }
 
@@ -210,7 +200,15 @@ fn pronomo(vorto: &str) -> Option<Value> {
 
 fn radiko(vorto: &str) -> Vec<Value> {
     match kunmetita(vorto) {
-        Some(vektoro) => vektoro_al_mapo(vektoro),
+        Some(vektoro) => {
+            let mut vek = Vec::with_capacity(vektoro.len());
+            for (indekso, valuo) in vektoro.iter() {
+                let mut mapo = Map::with_capacity(1);
+                mapo.insert(indekso.clone(), valuo.clone());
+                vek.push(Value::Object(mapo));
+            }
+            vek
+        },
         None => vec![],
     }
 }

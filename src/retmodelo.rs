@@ -4,7 +4,7 @@ use yew::prelude::*;
 
 pub struct RetPaĝo {
     enigo: String,
-    traduko: Option<Value>,
+    traduko: Value,
     ligilo: ComponentLink<Self>,
 }
 
@@ -12,14 +12,16 @@ pub enum Ago {
     Parsu(String),
 }
 
+const DEFAŬLTA: &str = "Saluton, al ĉiuj!";
+
 impl Component for RetPaĝo {
     type Message = Ago;
     type Properties = ();
 
     fn create(_: Self::Properties, ligilo: ComponentLink<Self>) -> Self {
         Self {
-            enigo: String::new(),
-            traduko: None,
+            enigo: String::from(DEFAŬLTA),
+            traduko: parsu_frazon(DEFAŬLTA),
             ligilo,
         }
     }
@@ -28,7 +30,7 @@ impl Component for RetPaĝo {
         match mesaĝo {
             Ago::Parsu(enigo) => {
                 self.enigo = enigo.clone();
-                self.traduko = Some(parsu_frazon(&enigo));
+                self.traduko = parsu_frazon(&enigo);
             }
         }
         true
@@ -39,24 +41,19 @@ impl Component for RetPaĝo {
     }
 
     fn view(&self) -> Html {
-        let nula_vektoro = Vec::with_capacity(0);
-        let traduko = if let Some(traduko) = &self.traduko {
-            match traduko {
-                Value::Array(frazo) => frazo,
-                _ => unreachable!(),
-            }
-        } else {
-            &nula_vektoro
+        let traduko = match &self.traduko {
+            Value::Array(frazo) => frazo,
+            _ => unreachable!(),
         };
 
         html! {
             <div>
-                <textarea class="tekstejo" rows="7" cols="50"
+                <textarea class="tekstejo" rows="7" cols="50" placeholder=DEFAŬLTA
                     oninput=self.ligilo.callback(|enigo: InputData| Ago::Parsu(enigo.value))>
                 </textarea>
                 <br />
                 <textarea readonly=true class="tekstejo" rows="7" cols="50"
-                    value=Value::Array(traduko.clone()).to_string()>
+                    value=self.traduko.to_string()>
                 </textarea>
                 <p>{for traduko.iter()
                     .zip(self.enigo.split_whitespace())

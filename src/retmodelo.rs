@@ -1,11 +1,12 @@
 use crate::parsu_frazon;
 use serde_json::Value;
+use web_sys::HtmlTextAreaElement;
+use yew::events::InputEvent;
 use yew::prelude::*;
 
 pub struct RetPaĝo {
     enigo: String,
     traduko: Value,
-    ligilo: ComponentLink<Self>,
 }
 
 pub enum Ago {
@@ -18,15 +19,14 @@ impl Component for RetPaĝo {
     type Message = Ago;
     type Properties = ();
 
-    fn create(_: Self::Properties, ligilo: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {
             enigo: String::from(DEFAŬLTA),
             traduko: parsu_frazon(DEFAŬLTA),
-            ligilo,
         }
     }
 
-    fn update(&mut self, mesaĝo: Self::Message) -> ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, mesaĝo: Self::Message) -> bool {
         match mesaĝo {
             Ago::Parsu(enigo) => {
                 self.enigo = enigo.clone();
@@ -36,11 +36,11 @@ impl Component for RetPaĝo {
         true
     }
 
-    fn change(&mut self, _: Self::Properties) -> ShouldRender {
+    fn changed(&mut self, _ctx: &Context<Self>) -> bool {
         true
     }
 
-    fn view(&self) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         let traduko = match &self.traduko {
             Value::Array(frazo) => frazo,
             _ => unreachable!(),
@@ -48,12 +48,15 @@ impl Component for RetPaĝo {
 
         html! {
             <div>
-                <textarea class="tekstejo" rows="7" cols="50" placeholder=DEFAŬLTA
-                    oninput=self.ligilo.callback(|enigo: InputData| Ago::Parsu(enigo.value))>
+                <textarea class="tekstejo" rows="7" cols="50" placeholder={DEFAŬLTA}
+                    oninput={ctx.link().callback(|evento: InputEvent| {
+                        Ago::Parsu(evento.target_unchecked_into::<HtmlTextAreaElement>().value())
+                   }
+               )}>
                 </textarea>
                 <br />
                 <textarea readonly=true class="tekstejo" rows="7" cols="50"
-                    value=self.traduko.to_string()>
+                    value={self.traduko.to_string()}>
                 </textarea>
                 <p>{for traduko.iter()
                     .zip(self.enigo.split_whitespace())

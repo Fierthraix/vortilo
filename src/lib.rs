@@ -2,7 +2,6 @@
 extern crate lazy_static;
 
 use wasm_bindgen::prelude::*;
-use yew::prelude::*;
 
 mod parsilo;
 mod retmodelo;
@@ -13,5 +12,5 @@ use retmodelo::RetPaĝo;
 
 #[wasm_bindgen(start)]
 pub fn eku() {
-    App::<RetPaĝo>::new().mount_to_body();
+    yew::start_app::<RetPaĝo>();
 }

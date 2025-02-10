@@ -12,5 +12,5 @@ use retmodelo::RetPaĝo;
 
 #[wasm_bindgen(start)]
 pub fn eku() {
-    yew::start_app::<RetPaĝo>();
+    yew::Renderer::<RetPaĝo>::new().render();
 }

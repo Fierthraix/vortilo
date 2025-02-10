@@ -36,7 +36,7 @@ impl Component for RetPaĝo {
         true
     }
 
-    fn changed(&mut self, _ctx: &Context<Self>) -> bool {
+    fn changed(&mut self, _ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
         true
     }
 
@@ -99,7 +99,7 @@ impl RetPaĝo {
             <p class="pepo_titolo">{vorto}{'\u{00a0}'}</p>
               <div class="pepo_enhavo">
               <table>
-                { for listo.iter().map(|mapo| tabel_vico(mapo)) }
+                { for listo.iter().map(tabel_vico) }
               </table>
               </div>
             </div>

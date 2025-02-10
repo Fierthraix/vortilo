@@ -1,6 +1,6 @@
 [package]
 name = "vortilo"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Lucas Rooyakkers <lucas.rooyakkers@protonmail.com>"]
 edition = "2021"
 
@@ -10,9 +10,9 @@ crate-type = ["cdylib", "rlib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lazy_static = "1.4"
-logos = "0.12"
+lazy_static = "1.5"
+logos = "0.15"
 serde_json = "1.0"
 wasm-bindgen = "0.2"
-yew = "0.19"
-web-sys = {version = "*", features = ["InputEvent"]}
+yew = { version = "0.21", features = ["csr"] }
+web-sys = { version = "*", features = ["InputEvent"] }

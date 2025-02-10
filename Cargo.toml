@@ -1,8 +1,10 @@
 [package]
 name = "vortilo"
+description = "Analizas la gramatikon de Esperantaj frazoj."
 version = "0.1.1"
 authors = ["Lucas Rooyakkers <lucas.rooyakkers@protonmail.com>"]
 edition = "2021"
+license = 'GPL-3.0-or-later'
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -15,4 +17,4 @@ logos = "0.15"
 serde_json = "1.0"
 wasm-bindgen = "0.2"
 yew = { version = "0.21", features = ["csr"] }
-web-sys = { version = "*", features = ["InputEvent"] }
+web-sys = { version = "0.3", features = ["InputEvent"] }

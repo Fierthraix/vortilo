@@ -1,4 +1,4 @@
-use serde_json::{json, map::Map, Value};
+use serde_json::{Value, json, map::Map};
 
 macro_rules! trancxi {
     ($vorto:expr, $nombro:expr) => {
@@ -118,21 +118,26 @@ pub fn parsu_vorton(vorto: &str) -> Value {
         return Value::Array(vec![json!({vorto: ""})]);
     };
 
-    let mut rezulto = radiko(radik);
-    if rezulto.is_empty() {
-        rezulto.push(json!({radik: ""}));
+    let mut interpretoj = radiko(radik);
+    if interpretoj.is_empty() {
+        interpretoj.push(vec![json!({radik: ""})]);
     }
 
-    rezulto.push(speco);
-
-    if plurala {
-        rezulto.push(PLURALA.clone());
+    for interpreto in interpretoj.iter_mut() {
+        interpreto.push(speco.clone());
+        if plurala {
+            interpreto.push(PLURALA.clone());
+        }
+        if akuzativa {
+            interpreto.push(AKUZATIVA.clone());
+        }
     }
-    if akuzativa {
-        rezulto.push(AKUZATIVA.clone());
+
+    if interpretoj.len() == 1 {
+        return Value::Array(interpretoj.pop().unwrap());
     }
 
-    Value::Array(rezulto)
+    Value::Array(interpretoj.into_iter().map(Value::Array).collect())
 }
 
 fn gramatika(vorto: &str) -> Option<Value> {
@@ -198,58 +203,48 @@ fn pronomo(vorto: &str) -> Option<Value> {
     Some(Value::Array(rezulto))
 }
 
-fn radiko(vorto: &str) -> Vec<Value> {
-    match kunmetita(vorto) {
-        Some(vektoro) => {
-            let mut vek = Vec::with_capacity(vektoro.len());
-            for (indekso, valuo) in vektoro.iter() {
-                let mut mapo = Map::with_capacity(1);
-                mapo.insert(indekso.clone(), valuo.clone());
-                vek.push(Value::Object(mapo));
-            }
-            vek
-        }
-        None => vec![],
-    }
+fn radiko(vorto: &str) -> Vec<Vec<Value>> {
+    kunmetita(vorto)
+        .into_iter()
+        .map(|vektoro| {
+            vektoro
+                .into_iter()
+                .map(|(indekso, valuo)| {
+                    let mut mapo = Map::with_capacity(1);
+                    mapo.insert(indekso, valuo);
+                    Value::Object(mapo)
+                })
+                .collect::<Vec<Value>>()
+        })
+        .collect::<Vec<Vec<Value>>>()
 }
 
-fn kunmetita(vorto: &str) -> Option<Vec<(String, Value)>> {
-    let mut indeksoj = vec![];
-    let mut valuoj = vec![];
+fn kunmetita(vorto: &str) -> Vec<Vec<(String, Value)>> {
+    let mut interpretoj = vec![];
+    let mut nuna_vojo = vec![];
+    sercxu_kunmetojn(vorto, 0, &mut nuna_vojo, &mut interpretoj);
+    interpretoj.sort_by_key(|i| i.len());
+    interpretoj
+}
 
-    let mut nuna_indekso = 0;
-    let mut vorto_indesko = 0;
+fn sercxu_kunmetojn(
+    vorto: &str,
+    nuna_indekso: usize,
+    nuna_vojo: &mut Vec<(String, Value)>,
+    interpretoj: &mut Vec<Vec<(String, Value)>>,
+) {
+    if nuna_indekso == vorto.len() {
+        interpretoj.push(nuna_vojo.clone());
+        return;
+    }
 
-    while nuna_indekso < vorto.len() {
-        let ebla_vorto = &RADIKOJ[vorto_indesko].0; // Radiko ni volas provi.
-        if vorto[nuna_indekso..].starts_with(ebla_vorto) {
-            // Vorto komencas kun la radiko; aldonu ĝin al nia list'.
-            indeksoj.push((nuna_indekso, vorto_indesko));
-            valuoj.push(RADIKOJ[vorto_indesko].clone());
-
-            nuna_indekso += ebla_vorto.len(); // Movu al nova indekso.
-            vorto_indesko = 0; // Ni volas reprovi ĉiun radikon.
-        } else {
-            // Alie, vorto ne ĝustis, do ni pliigu tiun indekson.
-            if vorto_indesko < RADIKOJ.len() - 1 {
-                vorto_indesko += 1; // Se ne, pliigu l'indekson.
-            } else {
-                if valuoj.is_empty() {
-                    return None;
-                }
-                valuoj.pop(); // Forĵeti valuon.
-                let nov_indekstoj = indeksoj.pop().unwrap(); // Restarigi al lastaj indeksoj.
-                nuna_indekso = nov_indekstoj.0;
-                vorto_indesko = nov_indekstoj.1 + 1;
-
-                if vorto_indesko >= RADIKOJ.len() {
-                    // Ni ne havas pliajn vortojn provi.
-                    return None;
-                }
-            }
+    for (radiko, traduko) in RADIKOJ.iter() {
+        if vorto[nuna_indekso..].starts_with(radiko) {
+            nuna_vojo.push((radiko.clone(), traduko.clone()));
+            sercxu_kunmetojn(vorto, nuna_indekso + radiko.len(), nuna_vojo, interpretoj);
+            nuna_vojo.pop();
         }
     }
-    Some(valuoj)
 }
 
 fn verbo(vorto: &str) -> Value {
@@ -287,10 +282,21 @@ fn verbo(vorto: &str) -> Value {
         return json!({});
     };
 
-    let mut rezulto = radiko(radik);
-    rezulto.push(tenso);
+    let mut interpretoj = radiko(radik);
 
-    Value::Array(rezulto)
+    if interpretoj.is_empty() {
+        return Value::Array(vec![tenso]);
+    }
+
+    for interpreto in interpretoj.iter_mut() {
+        interpreto.push(tenso.clone());
+    }
+
+    if interpretoj.len() == 1 {
+        return Value::Array(interpretoj.pop().unwrap());
+    }
+
+    Value::Array(interpretoj.into_iter().map(Value::Array).collect())
 }
 
 #[cfg(test)]
@@ -298,7 +304,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn testu_vortilon() {
+    fn testu_bazan_frazon() {
         let frazo = "mi estas simpla homo kiu ŝatas la plej bonajn aĵojn en la viv' morgaŭ";
 
         let vortoj = frazo
@@ -306,25 +312,250 @@ mod tests {
             .map(|vorto| parsu_vorton(vorto))
             .collect::<Vec<Value>>();
 
-        println!("{}", Value::Array(vortoj.clone()).to_string());
-
-        let atendita: Value = serde_json::from_str(r#"[
-            [{"mi":{"mi":"I/me"}}],
-            [{"estas":[{"est":"you are"}]},{"as":"present tense"}],
-            [[{"simpl":"simple"}],{"a":"adjective"}],
-            [[{"hom":"man"}],{"o":"noun"}],
-            [{"kiu":{"kiu":"who/which"}}],
-            [{"ŝatas":[{"ŝat":"to like"}]},{"as":"present tense"}],
+        let atendita = serde_json::json!([
+            [{"mi":"I/me"}],
+            [{"est":"to be"},{"as":"present tense"}],
+            [{"simpl":"simple"},{"a":"adjective"}],
+            [{"hom":"man"},{"o":"noun"}],
+            [{"kiu":"who/which"}],
+            [{"ŝat":"to like"},{"as":"present tense"}],
             [{"la":"the"}],
             [{"plej":"most"}],
-            [[{"bon":"good"}],{"a":"adjective"},{"j":"plural"},{"n":"accusative"}],
-            [[{"aĵ":"thing, concrete manifestation"}],{"o":"noun"},{"j":"plural"},{"n":"accusative"}],
+            [{"bon":"good"},{"a":"adjective"},{"j":"plural"},{"n":"accusative"}],
+            [{"aĵ":"thing, concrete manifestation"},{"o":"noun"},{"j":"plural"},{"n":"accusative"}],
             [{"en":"in"}],
             [{"la":"the"}],
-            [[{"viv":"live"}],{"'":"noun"}],
+            [{"viv":"live"},{"'":"poetry noun ending"}],
             [{"morgaŭ":"tomorrow"}]
-        ]"#).unwrap();
+        ]);
 
         assert_eq!(Value::Array(vortoj), atendita);
+    }
+
+    #[test]
+    fn testu_plurajn_interpretojn_por_kunmetajxo() {
+        let rezulto = parsu_vorton("dolĉamaro");
+        let atendita = serde_json::json!([
+            [{"dolĉ":"sweet"},{"amar":"bitter"},{"o":"noun"}],
+            [{"dolĉ":"sweet"},{"am":"love"},{"ar":"group, collection"},{"o":"noun"}]
+        ]);
+        assert_eq!(rezulto, atendita);
+    }
+
+    #[test]
+    fn testu_ordigon_de_interpretoj_laŭ_komponoj() {
+        let rezulto = parsu_vorton("eraro");
+        // "erar-o" (2 komponoj) devas aperi antaŭ "er-ar-o" (3 komponoj)
+        let atendita = serde_json::json!([
+            [{"erar":"to err"},{"o":"noun"}],
+            [{"er":"fragment, small piece, particle"},{"ar":"group, collection"},{"o":"noun"}]
+        ]);
+        assert_eq!(rezulto, atendita);
+    }
+
+    // --- Verbaj tensoj ---
+
+    #[test]
+    fn testu_pasintajn_verbojn() {
+        assert_eq!(
+            parsu_vorton("kuris"),
+            serde_json::json!([{"kur":"run"},{"is":"past tense"}])
+        );
+    }
+
+    #[test]
+    fn testu_estontajn_verbojn() {
+        assert_eq!(
+            parsu_vorton("kuros"),
+            serde_json::json!([{"kur":"run"},{"os":"future tense"}])
+        );
+    }
+
+    #[test]
+    fn testu_kondiĉajn_verbojn() {
+        assert_eq!(
+            parsu_vorton("kurus"),
+            serde_json::json!([{"kur":"run"},{"us":"conditional tense"}])
+        );
+    }
+
+    #[test]
+    fn testu_infinitivajn_verbojn() {
+        assert_eq!(
+            parsu_vorton("kuri"),
+            serde_json::json!([{"kur":"run"},{"i":"infinitive tense"}])
+        );
+    }
+
+    // --- Adverboj ---
+
+    #[test]
+    fn testu_adverbon() {
+        assert_eq!(
+            parsu_vorton("rapide"),
+            serde_json::json!([{"rapid":"fast"},{"e":"adverb"}])
+        );
+    }
+
+    #[test]
+    fn testu_adverbon_akuzativan() {
+        assert_eq!(
+            parsu_vorton("rapiden"),
+            serde_json::json!([{"rapid":"fast"},{"e":"adverb"},{"n":"accusative"}])
+        );
+    }
+
+    // --- Substantivaj finaĵoj ---
+
+    #[test]
+    fn testu_substantivon_pluralon() {
+        assert_eq!(
+            parsu_vorton("hundoj"),
+            serde_json::json!([{"hund":"dog"},{"o":"noun"},{"j":"plural"}])
+        );
+    }
+
+    #[test]
+    fn testu_substantivon_akuzativan() {
+        assert_eq!(
+            parsu_vorton("hundon"),
+            serde_json::json!([{"hund":"dog"},{"o":"noun"},{"n":"accusative"}])
+        );
+    }
+
+    #[test]
+    fn testu_substantivon_pluralan_akuzativan() {
+        assert_eq!(
+            parsu_vorton("hundojn"),
+            serde_json::json!([{"hund":"dog"},{"o":"noun"},{"j":"plural"},{"n":"accusative"}])
+        );
+    }
+
+    // --- Adjektivaj finaĵoj ---
+
+    #[test]
+    fn testu_adjektivon_pluralon() {
+        assert_eq!(
+            parsu_vorton("rapidaj"),
+            serde_json::json!([{"rapid":"fast"},{"a":"adjective"},{"j":"plural"}])
+        );
+    }
+
+    #[test]
+    fn testu_adjektivon_pluralan_akuzativan() {
+        assert_eq!(
+            parsu_vorton("rapidajn"),
+            serde_json::json!([{"rapid":"fast"},{"a":"adjective"},{"j":"plural"},{"n":"accusative"}])
+        );
+    }
+
+    // --- Tabelvorto kun finaĵoj ---
+
+    #[test]
+    fn testu_tabelvortojn_bazajn() {
+        assert_eq!(
+            parsu_vorton("tio"),
+            serde_json::json!([{"tio":"that"}])
+        );
+    }
+
+    #[test]
+    fn testu_tabelvortojn_pluralon() {
+        assert_eq!(
+            parsu_vorton("tioj"),
+            serde_json::json!([{"tio":"that"},{"j":"plural"}])
+        );
+    }
+
+    #[test]
+    fn testu_tabelvortojn_akuzativan() {
+        assert_eq!(
+            parsu_vorton("tion"),
+            serde_json::json!([{"tio":"that"},{"n":"accusative"}])
+        );
+    }
+
+    #[test]
+    fn testu_tabelvortojn_pluralan_akuzativan() {
+        assert_eq!(
+            parsu_vorton("tiojn"),
+            serde_json::json!([{"tio":"that"},{"j":"plural"},{"n":"accusative"}])
+        );
+    }
+
+    // --- Pronomaj finaĵoj ---
+
+    #[test]
+    fn testu_pronomajn_akuzativan() {
+        assert_eq!(
+            parsu_vorton("min"),
+            serde_json::json!([{"mi":"I/me"},{"n":"accusative"}])
+        );
+    }
+
+    #[test]
+    fn testu_pronomajn_posedan() {
+        assert_eq!(
+            parsu_vorton("mia"),
+            serde_json::json!([{"mi":"I/me"},{"a":"possesive"}])
+        );
+    }
+
+    #[test]
+    fn testu_pronomajn_posedan_akuzativan() {
+        assert_eq!(
+            parsu_vorton("mian"),
+            serde_json::json!([{"mi":"I/me"},{"a":"possesive"},{"n":"accusative"}])
+        );
+    }
+
+    #[test]
+    fn testu_pronomajn_posedan_pluralon_akuzativan() {
+        assert_eq!(
+            parsu_vorton("miajn"),
+            serde_json::json!([{"mi":"I/me"},{"a":"possesive"},{"j":"plural"},{"n":"accusative"}])
+        );
+    }
+
+    // --- Nekonataj vortoj ---
+
+    #[test]
+    fn testu_nekonatan_vorton() {
+        // vorto sen rekonigebla finaĵo
+        assert_eq!(
+            parsu_vorton("xyz"),
+            serde_json::json!([{"xyz":""}])
+        );
+    }
+
+    #[test]
+    fn testu_mallongan_vorton() {
+        // malpli ol 3 bajtoj
+        assert_eq!(
+            parsu_vorton("ab"),
+            serde_json::json!([{"ab":""}])
+        );
+    }
+
+    // --- Interpunkcio en parsu_frazon ---
+
+    #[test]
+    fn testu_interpunkcion_en_frazo() {
+        let rezulto = parsu_frazon("vi kuras!");
+        let atendita = serde_json::json!([
+            [{"vi":"you"}],
+            [{"kur":"run"},{"as":"present tense"}]
+        ]);
+        assert_eq!(rezulto, atendita);
+    }
+
+    #[test]
+    fn testu_komon_en_frazo() {
+        let rezulto = parsu_frazon("jes, mi");
+        let atendita = serde_json::json!([
+            [{"jes":"yes"}],
+            [{"mi":"I/me"}]
+        ]);
+        assert_eq!(rezulto, atendita);
     }
 }

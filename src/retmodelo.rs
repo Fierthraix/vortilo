@@ -92,13 +92,42 @@ impl RetPaĝo {
             }
         };
 
+        let interpretoj = if listo.iter().all(|ero| matches!(ero, Value::Object(_))) {
+            vec![listo.clone()]
+        } else if listo.iter().all(|ero| matches!(ero, Value::Array(_))) {
+            listo
+                .iter()
+                .map(|ero| {
+                    if let Value::Array(interpreto) = ero {
+                        interpreto.clone()
+                    } else {
+                        unreachable!()
+                    }
+                })
+                .collect::<Vec<Vec<Value>>>()
+        } else {
+            return html! { <h1>{format!("NEATENDITA TRADUKA FORMATO {:?}", traduko)}</h1> };
+        };
+        let estas_pluraj = interpretoj.len() > 1;
+        let interpretoj_stilo = if estas_pluraj {
+            "display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 1rem;"
+        } else {
+            ""
+        };
+
         html! {
             <div class="pepo_ujo">
             <p class="pepo_titolo">{vorto}{'\u{00a0}'}</p>
-              <div class="pepo_enhavo">
-              <table>
-                { for listo.iter().map(tabel_vico) }
-              </table>
+              <div class="pepo_enhavo" style={interpretoj_stilo}>
+                { for interpretoj.iter().map(|interpreto| {
+                    html! {
+                        <div class="pepo_interpreto">
+                            <table>
+                                { for interpreto.iter().map(tabel_vico) }
+                            </table>
+                        </div>
+                    }
+                }) }
               </div>
             </div>
         }

@@ -22,6 +22,10 @@
     padding: 1.5rem;
     /*box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);*/
     width: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-start;
 }
 .pepo_enhavo:before {
     position: absolute;
@@ -47,4 +51,19 @@
 }
 .pepo_mesagxo {
     text-align: center;
+}
+
+.pepo_interpreto {
+    padding-left: 0.8rem;
+    border-left: 1px solid #d9d9d9;
+}
+
+.pepo_interpreto:first-child {
+    padding-left: 0;
+    border-left: 0;
+}
+
+.pepo_interpreto_titolo {
+    margin: 0 0 0.4rem 0;
+    font-weight: 700;
 }

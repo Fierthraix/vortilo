@@ -48,16 +48,14 @@ impl Component for RetPaĝo {
 
         html! {
             <div>
-                <textarea class="tekstejo" rows="7" cols="50" placeholder={DEFAŬLTA}
+                <textarea class="tekstejo" rows="7" cols="50" placeholder={DEFAŬLTA} value={self.enigo.clone()}
                     oninput={ctx.link().callback(|evento: InputEvent| {
                         Ago::Parsu(evento.target_unchecked_into::<HtmlTextAreaElement>().value())
                    }
-               )}>
-                </textarea>
+               )} />
                 <br />
                 <textarea readonly=true class="tekstejo" rows="7" cols="50"
-                    value={self.traduko.to_string()}>
-                </textarea>
+                    value={self.traduko.to_string()} />
                 <p>{for traduko.iter()
                     .zip(self.enigo.split_whitespace())
                     .map(|(traduko, enigo)| RetPaĝo::bildigi_vorton(enigo, traduko))}

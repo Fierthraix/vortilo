@@ -3,7 +3,7 @@ name = "vortilo"
 description = "Analizas la gramatikon de Esperantaj frazoj."
 version = "0.1.1"
 authors = ["Lucas Rooyakkers <lucas.rooyakkers@protonmail.com>"]
-edition = "2021"
+edition = "2024"
 license = 'GPL-3.0-or-later'
 
 [lib]
@@ -16,5 +16,5 @@ lazy_static = "1.5"
 logos = "0.15"
 serde_json = "1.0"
 wasm-bindgen = "0.2"
-yew = { version = "0.21", features = ["csr"] }
+yew = { version = "0.22", features = ["csr"] }
 web-sys = { version = "0.3", features = ["InputEvent"] }

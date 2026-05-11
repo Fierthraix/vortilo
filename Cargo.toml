@@ -1,7 +1,7 @@
 [package]
 name = "vortilo"
 description = "Analizas la gramatikon de Esperantaj frazoj."
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Lucas Rooyakkers <lucas.rooyakkers@protonmail.com>"]
 edition = "2024"
 license = 'GPL-3.0-or-later'

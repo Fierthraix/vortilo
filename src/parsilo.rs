@@ -309,7 +309,7 @@ mod tests {
 
         let vortoj = frazo
             .split_whitespace()
-            .map(|vorto| parsu_vorton(vorto))
+            .map(parsu_vorton)
             .collect::<Vec<Value>>();
 
         let atendita = serde_json::json!([
@@ -453,10 +453,7 @@ mod tests {
 
     #[test]
     fn testu_tabelvortojn_bazajn() {
-        assert_eq!(
-            parsu_vorton("tio"),
-            serde_json::json!([{"tio":"that"}])
-        );
+        assert_eq!(parsu_vorton("tio"), serde_json::json!([{"tio":"that"}]));
     }
 
     #[test]
@@ -522,19 +519,13 @@ mod tests {
     #[test]
     fn testu_nekonatan_vorton() {
         // vorto sen rekonigebla finaĵo
-        assert_eq!(
-            parsu_vorton("xyz"),
-            serde_json::json!([{"xyz":""}])
-        );
+        assert_eq!(parsu_vorton("xyz"), serde_json::json!([{"xyz":""}]));
     }
 
     #[test]
     fn testu_mallongan_vorton() {
         // malpli ol 3 bajtoj
-        assert_eq!(
-            parsu_vorton("ab"),
-            serde_json::json!([{"ab":""}])
-        );
+        assert_eq!(parsu_vorton("ab"), serde_json::json!([{"ab":""}]));
     }
 
     // --- Interpunkcio en parsu_frazon ---
